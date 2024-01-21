@@ -9,7 +9,13 @@ let package = Package(
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "Swift-Salesforce-Commerce-SDK",
-            targets: ["Swift-Salesforce-Commerce-SDK"]),
+            targets: ["Swift-Salesforce-Commerce-SDK"]
+        ),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-openapi-generator", from: "1.2.0"),
+        .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.3.2"),
+        .package(url: "https://github.com/apple/swift-openapi-urlsession", from: "1.0.1")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.

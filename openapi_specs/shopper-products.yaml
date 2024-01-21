@@ -1,0 +1,1610 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Shopper Products",
+    "description": "# API Overview\n\nThe Shopper Product API enables you to access product details for products that are online, merchandised to a particular site catalog, and ready to be sold. You can use these product details to merchandise the product on other ecommerce channels. To set up category navigation paths on other commerce apps or storefronts, you can use the Categories API.\n\n## Authentication & Authorization\n\nThe client requesting the product information must have access to the Products resource. The Shopper Products API requires a shopper access token from the Shopper Login and API Access Service (SLAS).\n\nFor details on how to request a shopper access token from SLAS, see the guest user flows for [public clients](https://developer.salesforce.com/docs/commerce/commerce-api/guide/slas-public-client.html#guest-user) and [private clients](https://developer.salesforce.com/docs/commerce/commerce-api/guide/slas-private-client.html#guest-user) in the SLAS guides.\n\n## Use Cases\n\n### Populate Product Listing Pages\n\nUse the Shopper Product API so that a customer, browsing on a commerce shopping app built using Commerce Cloud APIs, can see a list of products. For example, hydrate a list of products (max 24). The API returns product details including images, prices, promotions, and product availability.\n\n![b2c-commerce-shopper-products-screenshot-1.png](https://resources.docs.salesforce.com/rel1/doc/en-us/static/misc/b2c-commerce-shopper-products-screenshot-1.png)\n\n### Get Variation Product Details on an Ecommerce Channel\n\nUse the API so that a customer, browsing on a commerce shopping app built using Commerce Cloud APIs, can switch between different variation products. The API returns product details including images, prices, promotions, and available to sell inventory.\n\n![b2c-commerce-shopper-products-screenshot-2.png](https://resources.docs.salesforce.com/rel1/doc/en-us/static/misc/b2c-commerce-shopper-products-screenshot-2.png)\n\n## Resources\n\n### Product\n\nA full representation of a product or service that is to merchandise. A ready to merchandise product is one that is online, categorized, and published to a channel. The information associated with a product includes, the product name, description, custom and system attributes, variations, price, availability, and images.\n\n### Category\n\nCategories and subcategories are the structure by which products are organized and grouped in a catalog and on a storefront. Categories can have relationships to other categories. Further, each category can provide context that is inherited by subcategories. For example, a category can have an assigned attribute. A product assigned to that category or any subcategory inherits the categories’s attribute value. Once the product is removed from the category, the attribute value is no longer inherited by the product. You can also use category linking for site hierarchical navigation. For example, inside the Clothing category you may have Men’s, and inside the Men’s category you may have Pants.\n\nCategories are not tags.\n\n## Endpoints\n\n### GET /products\n\nReturns product details for up to 24 products in one API request. You can use this API for use cases that require populating or hydrating multiple products at a time, such as populating the Product Listing Pages.\n\nThe response data includes availability, promotions, images, and prices, along with the basic product information for the products requested.\n\n### GET /products/{id}\n\nReturns product details about a single product. Use this API for use cases that require populating or hydrating one product at a time, such as the Product Detail Pages.\n\nThe response data includes availability, promotions, options, images, prices, variations, bundled_products, set_products, recommendations, and the basic product information for the product requested.\n\n### GET /categories\n\nReturns category details including the parent child relationships for one or more categories. The limit on depth for the parent-child relationship is 2.",
+    "version": "v1"
+  },
+  "x-basePath": "{shortCode}.api.commercecloud.salesforce.com/product/shopper-products/{version}",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "definitions": {
+    "BundledProduct": {
+      "description": "A bundle of products that can be bought together (all or nothing). Each product in the bundle can itself be bought independently, but this is outside of the context of the bundle. A bundle is a purchasing convenience. *Product bundle has a SKU and price.*",
+      "properties": {
+        "id": {
+          "example": "823476",
+          "type": "string"
+        },
+        "product": {
+          "description": "The product being bundled.",
+          "$ref": "#/definitions/Product"
+        },
+        "quantity": {
+          "format": "double",
+          "description": "For the product being bundled, the quantity added to the bundle.",
+          "example": 5,
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "product",
+        "quantity"
+      ],
+      "type": "object"
+    },
+    "Image": {
+      "description": "Product image",
+      "properties": {
+        "alt": {
+          "description": "The localized alternative text of the image.",
+          "example": "Apple iPod Shuffle, large",
+          "type": "string"
+        },
+        "disBaseLink": {
+          "description": "Base URL for the Dynamic Image Service (DIS) address. This is only shown if the image is stored on the server and DIS is enabled.",
+          "example": "https://example.com/images/large/ipod-shuffle-silver.jpg",
+          "type": "string"
+        },
+        "link": {
+          "minLength": 1,
+          "description": "The URL of the actual image.",
+          "example": "https://example.com/on/demandware.static/-/Sites-electronics-catalog/default/dwc2/images/large/ipod-shuffle.jpg",
+          "type": "string"
+        },
+        "title": {
+          "description": "The localized title of the image.",
+          "example": "Apple iPod Shuffle",
+          "type": "string"
+        }
+      },
+      "required": [
+        "link"
+      ],
+      "type": "object"
+    },
+    "ImageGroup": {
+      "description": "Document representing an image group containing a list of images for a particular view type and an optional variation value.",
+      "properties": {
+        "images": {
+          "description": "The images of the image group.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Image"
+          }
+        },
+        "variationAttributes": {
+          "description": "Returns a list of variation attributes applying to this image group.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VariationAttribute"
+          }
+        },
+        "viewType": {
+          "description": "The image view type.",
+          "example": "hi-res",
+          "type": "string"
+        }
+      },
+      "required": [
+        "images",
+        "viewType"
+      ],
+      "type": "object"
+    },
+    "Inventory": {
+      "description": "Document representing inventory information of the current product for a particular inventory list.",
+      "properties": {
+        "ats": {
+          "format": "double",
+          "description": "The Available To Sell (ATS) of the product. If it is infinity, the return value is 999999. The value can be overwritten by the\n OCAPI setting 'product.inventory.ats.max_threshold'.",
+          "example": 15,
+          "type": "number"
+        },
+        "backorderable": {
+          "description": "A flag indicating whether the product is backorderable.",
+          "example": true,
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The inventory ID.",
+          "example": "SiteList",
+          "type": "string"
+        },
+        "inStockDate": {
+          "description": "A flag indicating the date when the product will be in stock.",
+          "example": "9999-12-31T00:00:00.0Z",
+          "type": "string",
+          "format": "date-time"
+        },
+        "orderable": {
+          "description": "A flag indicating whether at least one of the products is available to sell.",
+          "example": true,
+          "type": "boolean"
+        },
+        "preorderable": {
+          "description": "A flag indicating whether the product is preorderable.",
+          "example": false,
+          "type": "boolean"
+        },
+        "stockLevel": {
+          "format": "double",
+          "description": "The stock level of the product. If it is infinity, the return value is 999999. The value can be overwritten by the\n OCAPI setting 'product.inventory.stock_level.max_threshold'.",
+          "example": 10,
+          "type": "number"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "Master": {
+      "description": "The master product is a representation of a group of variant products. This is a non-buyable entity, provides inheritable attributes for its product variants, and is used for navigation. *Doesn't have a SKU.*",
+      "properties": {
+        "masterId": {
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "The ID (SKU) of the master product.",
+          "example": "82349",
+          "type": "string"
+        },
+        "orderable": {
+          "description": "A flag indicating whether at least one of the variants is orderable.",
+          "example": true,
+          "type": "boolean"
+        },
+        "price": {
+          "format": "double",
+          "description": "The minimum sales price of the related variants.",
+          "example": 15.99,
+          "type": "number"
+        },
+        "priceMax": {
+          "format": "double",
+          "description": "The maximum sales price of the related variants.",
+          "example": 25.99,
+          "type": "number"
+        },
+        "prices": {
+          "description": "List of sale prices.",
+          "type": "object",
+          "additionalProperties": {
+            "format": "double",
+            "type": "number"
+          }
+        }
+      },
+      "required": [
+        "masterId"
+      ],
+      "type": "object"
+    },
+    "Option": {
+      "description": "Product options enable you to sell configurable products that have optional accessories, upgrades, or additional services. Options are always purchased with a product and can't be purchased separately. *Product Option has a SKU and a price associated with it.*",
+      "properties": {
+        "description": {
+          "description": "The localized description of the option.",
+          "example": "Get this Option",
+          "type": "string"
+        },
+        "id": {
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "The ID of the option.",
+          "example": "Warranty",
+          "type": "string"
+        },
+        "image": {
+          "description": "The URL to the option image.",
+          "example": "https://www.exampleimage.com/images/optionImage.jpg",
+          "type": "string"
+        },
+        "name": {
+          "description": "The localized name of the option.",
+          "example": "Warranty",
+          "type": "string"
+        },
+        "values": {
+          "description": "The array of option values. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OptionValue"
+          }
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "OptionValue": {
+      "description": "Document representing an option value.",
+      "properties": {
+        "default": {
+          "description": "A flag indicating whether this option value is the default one.",
+          "example": true,
+          "type": "boolean"
+        },
+        "id": {
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "The ID of the option value.",
+          "example": "5YR",
+          "type": "string"
+        },
+        "name": {
+          "description": "The localized name of the option value.",
+          "example": "5 Year Warranty",
+          "type": "string"
+        },
+        "price": {
+          "format": "double",
+          "description": "The effective price of the option value.",
+          "example": 15.99,
+          "type": "number"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "PriceRange": {
+      "description": "Document representing price ranges for a product which happens to be a master product (per Pricebook)",
+      "properties": {
+        "maxPrice": {
+          "format": "double",
+          "description": "Maximum price for the given pricebook (usually for a master Product would be the price for the Variant which has the highest price out of all Variants in that pricebook)",
+          "example": 10.89,
+          "type": "number"
+        },
+        "minPrice": {
+          "format": "double",
+          "description": "Minimum price for the given pricebook (usually for a master Product would be the price for the Variant which has the least price out of all Variants in that pricebook)",
+          "example": 10.89,
+          "type": "number"
+        },
+        "pricebook": {
+          "description": "The active pricebook from which the min and the max prices are calculated. The pricebook is based on the site context of the request as defined in ECOM.",
+          "example": "usd-list-pricebook",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Product": {
+      "description": "Any product that is sold, shown alone, and does not have variations such as different sizes or colors. A product has no reliance on any other product for inheritance. *A product has a SKU and can have a product option, which has a different SKU*.",
+      "properties": {
+        "brand": {
+          "description": "The product's brand.",
+          "example": "Apple",
+          "type": "string"
+        },
+        "bundledProducts": {
+          "description": "The array of all bundled products of this product.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BundledProduct"
+          }
+        },
+        "currency": {
+          "description": "The ISO 4217 mnemonic code of the currency.",
+          "example": "USD",
+          "type": "string"
+        },
+        "ean": {
+          "description": "The European Article Number of the product.",
+          "example": "8essdf9w3",
+          "type": "string"
+        },
+        "fetchDate": {
+          "format": "int32",
+          "example": 5,
+          "type": "integer"
+        },
+        "id": {
+          "minLength": 1,
+          "maxLength": 24,
+          "description": "The ID (SKU) of the product.",
+          "example": "apple-ipod-classic",
+          "type": "string"
+        },
+        "imageGroups": {
+          "description": "The array of product image groups.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ImageGroup"
+          }
+        },
+        "inventories": {
+          "description": "The array of product inventories explicitly requested via the 'inventory_ids' query parameter. This property\n is only returned in context of the 'availability' expansion.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Inventory"
+          }
+        },
+        "inventory": {
+          "description": "The site default inventory information. This property is only\n returned in context of the 'availability' expansion.",
+          "$ref": "#/definitions/Inventory"
+        },
+        "longDescription": {
+          "description": "The localized product's long description.",
+          "example": "Awesome long description of product",
+          "type": "string"
+        },
+        "manufacturerName": {
+          "description": "The product's manufacturer name.",
+          "example": "Apple",
+          "type": "string"
+        },
+        "manufacturerSku": {
+          "description": "The product's manufacturer SKU.",
+          "example": "2ND8834",
+          "type": "string"
+        },
+        "master": {
+          "description": "The master product information, only for types: master, variation group, and variant.",
+          "$ref": "#/definitions/Master"
+        },
+        "minOrderQuantity": {
+          "format": "double",
+          "description": "The minimum order quantity for this product.",
+          "example": 2,
+          "type": "number"
+        },
+        "name": {
+          "description": "The localized product name.",
+          "example": "Apple IPod Classic",
+          "type": "string"
+        },
+        "options": {
+          "description": "The array of product options, only for type option. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Option"
+          }
+        },
+        "pageDescription": {
+          "description": "The localized product's page description.",
+          "example": "Really good Product",
+          "type": "string"
+        },
+        "pageKeywords": {
+          "description": "The localized product's page description.",
+          "example": "Ipod, Music Player",
+          "type": "string"
+        },
+        "pageTitle": {
+          "description": "The localized product's page title.",
+          "example": "Apple IPod Classic",
+          "type": "string"
+        },
+        "price": {
+          "format": "double",
+          "description": "The sales price of the product. In case of complex products, like master or set, this is the minimum price of\n related child products.",
+          "example": 59.99,
+          "type": "number"
+        },
+        "pricePerUnit": {
+          "format": "double",
+          "description": "The price per unit if defined for the product",
+          "example": 19.99,
+          "type": "number"
+        },
+        "pricePerUnitMax": {
+          "format": "double",
+          "description": "The max price per unit typically for a master product's variant.",
+          "example": 29.99,
+          "type": "number"
+        },
+        "priceMax": {
+          "format": "double",
+          "description": "The maximum sales of related child products in complex products like master or set.",
+          "example": 69.99,
+          "type": "number"
+        },
+        "priceRanges": {
+          "description": "Array of one or more price range objects representing one or more Pricebooks in context for the site.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PriceRange"
+          }
+        },
+        "prices": {
+          "description": "The prices map with pricebook IDs and their values.",
+          "type": "object",
+          "additionalProperties": {
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "primaryCategoryId": {
+          "description": "The ID of the products primary category.",
+          "example": "electronics",
+          "type": "string"
+        },
+        "productLinks": {
+          "description": "The array of source and target product links information.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProductLink"
+          }
+        },
+        "productPromotions": {
+          "description": "The array of active customer product promotions for this product. This array can be empty.\n Coupon promotions are not returned in this array.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProductPromotion"
+          }
+        },
+        "recommendations": {
+          "description": "Returns a list of recommendations.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Recommendation"
+          }
+        },
+        "setProducts": {
+          "description": "The array of set products of this product.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Product"
+          }
+        },
+        "shortDescription": {
+          "description": "The localized product short description.",
+          "example": "Awesome Product",
+          "type": "string"
+        },
+        "slugUrl": {
+          "description": "The complete link to this product's storefront page.",
+          "example": "https://www.example.com/on/store/Sites-MySite/default/Product-Show?pid=MyProduct",
+          "type": "string"
+        },
+        "stepQuantity": {
+          "format": "double",
+          "description": "The steps in which the order amount of the product can be\n increased.",
+          "example": 2,
+          "type": "number"
+        },
+        "tieredPrices": {
+          "description": "The document represents list of tiered prices if the product is a variant",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProductPriceTable"
+          }
+        },
+        "type": {
+          "description": "The product type information. Can be one or more of the following values: item, master, variation_group, variant, bundle, and set.",
+          "$ref": "#/definitions/ProductType"
+        },
+        "unit": {
+          "description": "The sales unit of the product.",
+          "example": "lbs",
+          "type": "string"
+        },
+        "upc": {
+          "description": "The Universal Product Code (UPC).",
+          "example": "JSDU876",
+          "type": "string"
+        },
+        "validFrom": {
+          "description": "The time a product is valid from.",
+          "example": "9999-12-31T00:00:00.0Z",
+          "type": "string",
+          "format": "date-time"
+        },
+        "validTo": {
+          "description": "The time a product is valid to.",
+          "example": "9999-12-31T23:59:59.0Z",
+          "type": "string",
+          "format": "date-time"
+        },
+        "variants": {
+          "description": "The array of actual variants. Only for master, variation group, and variant types. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Variant"
+          }
+        },
+        "variationAttributes": {
+          "description": "Sorted array of variation attributes information. Only for master,\n variation group, and variant types. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VariationAttribute"
+          }
+        },
+        "variationGroups": {
+          "description": "The array of actual variation groups. Only for master, variation group, and variant types. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VariationGroup"
+          }
+        },
+        "variationValues": {
+          "description": "The actual variation attribute ID - value pairs. Only for variant and\n variation group types.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "ProductLink": {
+      "description": "Document representing a link between two products. It contains the ID of the source and target products, the type of\n product link, and the URLs to retrieve product data.",
+      "properties": {
+        "sourceProductId": {
+          "description": "The semantic ID of the product this product link is coming from.",
+          "example": "824756924",
+          "type": "string"
+        },
+        "sourceProductLink": {
+          "description": "The URL addressing the product this product link is coming from.",
+          "example": "Link",
+          "type": "string"
+        },
+        "targetProductId": {
+          "description": "The semantic ID of the product this product link is pointing to.",
+          "example": "2TR93459",
+          "type": "string"
+        },
+        "targetProductLink": {
+          "description": "The URL addressing the product this product link is pointing to.",
+          "example": "Link",
+          "type": "string"
+        },
+        "type": {
+          "description": "The type of product link.",
+          "example": "up_sell",
+          "enum": [
+            "cross_sell",
+            "replacement",
+            "up_sell",
+            "accessory",
+            "newer_version",
+            "alt_orderunit",
+            "spare_part",
+            "other"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "sourceProductId",
+        "sourceProductLink",
+        "targetProductId",
+        "targetProductLink",
+        "type"
+      ],
+      "type": "object"
+    },
+    "ProductPriceTable": {
+      "description": "Tiered Price Level Object",
+      "properties": {
+        "price": {
+          "format": "double",
+          "description": "Price for the product for the specified tier for the specified pricebook",
+          "example": 12.99,
+          "type": "number"
+        },
+        "pricebook": {
+          "description": "The active pricebook for which this price is defined",
+          "example": "usd-list-pricebook",
+          "type": "string"
+        },
+        "quantity": {
+          "format": "double",
+          "description": "Quantity tier for which the price is defined.",
+          "example": 1,
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "ProductPromotion": {
+      "description": "Document representing a product promotion.",
+      "properties": {
+        "calloutMsg": {
+          "description": "The localized call-out message of the promotion.",
+          "example": "Fantastic promotion",
+          "type": "string"
+        },
+        "promotionId": {
+          "description": "The unique ID of the promotion.",
+          "example": "summerSale",
+          "type": "string"
+        },
+        "promotionalPrice": {
+          "format": "double",
+          "description": "The promotional price for this product.",
+          "example": 12.99,
+          "type": "number"
+        }
+      },
+      "required": [
+        "calloutMsg",
+        "promotionId",
+        "promotionalPrice"
+      ],
+      "type": "object"
+    },
+    "ProductResult": {
+      "description": "Result document containing an array of products.",
+      "properties": {
+        "limit": {
+          "format": "int32",
+          "description": "The number of returned documents.",
+          "example": 12,
+          "type": "integer"
+        },
+        "data": {
+          "description": "The array of product documents.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Product"
+          }
+        },
+        "total": {
+          "format": "int32",
+          "description": "The total number of documents.",
+          "example": 12,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "limit",
+        "data",
+        "total"
+      ],
+      "type": "object"
+    },
+    "ProductType": {
+      "description": "Document representing a product type.",
+      "properties": {
+        "bundle": {
+          "description": "A flag indicating whether the product is a bundle.",
+          "example": true,
+          "type": "boolean"
+        },
+        "item": {
+          "description": "A flag indicating whether the product is a standard item.",
+          "example": false,
+          "type": "boolean"
+        },
+        "master": {
+          "description": "A flag indicating whether the product is a master.",
+          "example": true,
+          "type": "boolean"
+        },
+        "option": {
+          "description": "A flag indicating whether the product is an option.",
+          "example": false,
+          "type": "boolean"
+        },
+        "set": {
+          "description": "A flag indicating whether the product is a set.",
+          "example": true,
+          "type": "boolean"
+        },
+        "variant": {
+          "description": "A flag indicating whether the product is a variant.",
+          "example": false,
+          "type": "boolean"
+        },
+        "variationGroup": {
+          "description": "A flag indicating whether the product is a variation group.",
+          "example": false,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "Recommendation": {
+      "description": "Document representing a product recommendation.",
+      "properties": {
+        "calloutMsg": {
+          "description": "The localized callout message of the recommendation.",
+          "example": "Absolutely recommended",
+          "type": "string"
+        },
+        "image": {
+          "description": "The image of the recommendation.",
+          "$ref": "#/definitions/Image"
+        },
+        "longDescription": {
+          "description": "The localized long description of the recommendation.",
+          "example": "Really good detailed product description",
+          "type": "string"
+        },
+        "name": {
+          "description": "The localized name of the recommendation.",
+          "example": "Apple Ipod Shuffle",
+          "type": "string"
+        },
+        "recommendationType": {
+          "description": "The recommendation type of the recommendation.",
+          "$ref": "#/definitions/RecommendationType"
+        },
+        "recommendedItemId": {
+          "description": "The recommended item ID of the recommendation.",
+          "example": "apple-ipod-shuffle",
+          "type": "string"
+        },
+        "shortDescription": {
+          "description": "The localized short description of the recommendation.",
+          "example": "Product description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "recommendationType"
+      ],
+      "type": "object"
+    },
+    "RecommendationType": {
+      "description": "Document representing a recommendation type.",
+      "properties": {
+        "displayValue": {
+          "description": "The localized display value of the recommendation type.",
+          "example": "UpSell",
+          "type": "string"
+        },
+        "value": {
+          "format": "int32",
+          "description": "The value of the recommendation type.",
+          "example": 2,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "displayValue",
+        "value"
+      ],
+      "type": "object"
+    },
+    "Variant": {
+      "description": "A product which is a variation within a master product that describes different colors, sizes, or other variation attributes. *Has a SKU.*",
+      "properties": {
+        "orderable": {
+          "description": "A flag indicating whether the variant is orderable.",
+          "example": true,
+          "type": "boolean"
+        },
+        "price": {
+          "format": "double",
+          "description": "The sales price of the variant.",
+          "example": 25.99,
+          "type": "number"
+        },
+        "productId": {
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "The ID (SKU) of the variant.",
+          "example": "8W4756834",
+          "type": "string"
+        },
+        "tieredPrices": {
+          "description": "List of tiered prices if the product is a variant",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProductPriceTable"
+          }
+        },
+        "variationValues": {
+          "description": "The actual variation attribute ID - value pairs.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "productId"
+      ],
+      "type": "object"
+    },
+    "VariationAttribute": {
+      "description": "Document representing a variation attribute.",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "description": "The ID of the variation attribute.",
+          "example": "color",
+          "type": "string"
+        },
+        "name": {
+          "description": "The localized display name of the variation attribute.",
+          "example": "Color",
+          "type": "string"
+        },
+        "values": {
+          "description": "The sorted array of variation values. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VariationAttributeValue"
+          }
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "VariationAttributeValue": {
+      "description": "Document representing a variation attribute value.",
+      "properties": {
+        "description": {
+          "description": "The localized description of the variation value.",
+          "example": "Color of the product",
+          "type": "string"
+        },
+        "image": {
+          "description": "The first product image for the configured viewtype and this variation value.",
+          "$ref": "#/definitions/Image"
+        },
+        "imageSwatch": {
+          "description": "The first product image for the configured viewtype and this variation value (typically the swatch image).",
+          "$ref": "#/definitions/Image"
+        },
+        "name": {
+          "description": "The localized display name of the variation value.",
+          "example": "Red",
+          "type": "string"
+        },
+        "orderable": {
+          "description": "A flag indicating whether at least one variant with this variation attribute value is available to sell.",
+          "example": true,
+          "type": "boolean"
+        },
+        "value": {
+          "minLength": 1,
+          "description": "The actual variation value.",
+          "example": "red",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "type": "object"
+    },
+    "VariationGroup": {
+      "description": "Representation of a group of variant products by an attribute. This is a non-buyable entity, provides inheritable attributes for its product variants, and is used for navigation. *Doesn't have a SKU.*",
+      "properties": {
+        "orderable": {
+          "description": "A flag indicating whether the variation group is orderable.",
+          "example": false,
+          "type": "boolean"
+        },
+        "price": {
+          "format": "double",
+          "description": "The sales price of the variation group.",
+          "example": 24.99,
+          "type": "number"
+        },
+        "productId": {
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "The ID (SKU) of the variation group.",
+          "example": "49345VG",
+          "type": "string"
+        },
+        "variationValues": {
+          "description": "The actual variation attribute ID - value pairs.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "orderable",
+        "price",
+        "productId",
+        "variationValues"
+      ],
+      "type": "object"
+    },
+    "Category": {
+      "description": "Categories allow products to be organized into hierarchical structures. Categories can have relationships to other parent categories. Each category can also provide a context inherited by subcategories. For example, a category may have an attribute value assigned to it, and any product assigned to the category or a subcategory would inherit the attribute value as long as the product is assigned. Once the product is removed from the category those attribute values would no longer be in the context of the product. Linking of categories is also used for Site hierarchical navigation. For example, inside 'Clothing' you may have 'Mens', and inside 'Mens' you may have 'Pants'. Categories are not *Tags.*",
+      "properties": {
+        "categories": {
+          "description": "Array of subcategories. Can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Category"
+          }
+        },
+        "description": {
+          "description": "The localized description of the category.",
+          "example": "Category description for Men's Category",
+          "type": "string"
+        },
+        "id": {
+          "description": "The ID of the category.",
+          "example": "mens",
+          "type": "string"
+        },
+        "image": {
+          "description": "The URL of the category image.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The localized name of the category.",
+          "example": "Men's Category",
+          "type": "string"
+        },
+        "pageDescription": {
+          "description": "The localized page description of the category.",
+          "example": "This category ahs all men's clothing",
+          "type": "string"
+        },
+        "pageKeywords": {
+          "description": "The localized page keywords of the category.",
+          "example": "Mens, shirts",
+          "type": "string"
+        },
+        "pageTitle": {
+          "description": "The localized page title of the category.",
+          "example": "Men's Category",
+          "type": "string"
+        },
+        "parentCategoryId": {
+          "description": "The ID of the parent category.",
+          "example": "apparel",
+          "type": "string"
+        },
+        "parentCategoryTree": {
+          "description": "The List of the parent categories.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PathRecord"
+          }
+        },
+        "thumbnail": {
+          "description": "The URL of the category thumbnail.",
+          "example": "https://www.exampleimage.com/images/categoryImage.jpg",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "PathRecord": {
+      "description": "Document representing most basic info (id and name) of a category or catalog.",
+      "properties": {
+        "id": {
+          "description": "The id of the category path.",
+          "example": "mens",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the category path.",
+          "example": "mens",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "CategoryResult": {
+      "description": "Result document containing an array of categories.",
+      "properties": {
+        "limit": {
+          "format": "int32",
+          "description": "The number of returned documents.",
+          "example": 10,
+          "type": "integer"
+        },
+        "data": {
+          "description": "The array of category documents.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Category"
+          }
+        },
+        "total": {
+          "format": "int32",
+          "description": "The total number of documents.",
+          "example": 5,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "limit",
+        "data",
+        "total"
+      ],
+      "type": "object"
+    },
+    "CommerceCloudStandards.SiteId": {
+      "minLength": 1,
+      "description": "The identifer of the site that a request is being made in the context of. Attributes might have site specific values, and some objects may only be assigned to specific sites",
+      "example": "SiteGenesis",
+      "type": "string"
+    },
+    "CommerceCloudStandards.Select": {
+      "minLength": 1,
+      "description": "The property selector declaring which fields are included into the response payload. You can specify a single field name, a comma-separated list of names or work with wildcards. You can also specify array operations and filter expressions. The actual selector value must be enclosed within parentheses.",
+      "example": "(name,id,variationAttributes.(**))",
+      "type": "string"
+    }
+  },
+  "parameters": {
+    "trait:CommerceCloudStandards.SiteSpecific:siteId": {
+      "in": "query",
+      "name": "siteId",
+      "required": true,
+      "type": "string"
+    }
+  },
+  "responses": {
+    "trait:ApiStandards.RateLimited:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:ProdTraits.Unauthorized:401": {
+      "description": "Unauthorized.",
+      "examples": {
+        "application/problem+json": {
+          "title": "Invalid Access Token",
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/invalid-access-token",
+          "detail": "The request is unauthorized, the access token is invalid.",
+          "accessToken": "hbGciOiJIUzI1NiIsInR5cCI6Ikp"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      }
+    },
+    "trait:ProdTraits.BadRequest1:400": {
+      "description": "Bad Request.",
+      "examples": {
+        "application/problem+json": {
+          "BadRequest": {
+            "title": "Bad Request",
+            "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/validation",
+            "detail": "Maximum number of products you can request in one call is 25."
+          },
+          "MalformedSelector": {
+            "title": "Malformed Selector",
+            "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/malformed-selector",
+            "detail": "The property selector '(brand,imageGroups.(**)' is malformed.",
+            "selector": "(brand,imageGroups.(**)"
+          },
+          "FilterExpressionBadRequest": {
+            "title": "Bad Request",
+            "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/bad-request",
+            "detail": "Filter expressions in select are not supported.",
+            "parameter": "Filter expressions in select are not supported.",
+            "selector": "(recommendations[?(recommendedItemId=='apple-ipod-nano'].(**))"
+          }
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      }
+    },
+    "trait:ProdTraits.BadRequest2:400": {
+      "description": "Bad Request.",
+      "examples": {
+        "application/problem+json": {
+          "MalformedSelectorGetProducts": {
+            "title": "Malformed Selector",
+            "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/malformed-selector",
+            "detail": "The property selector '(data.(name, imageGroups.(**))' is malformed.",
+            "selector": "(data.(name, imageGroups.(**))"
+          },
+          "FilterExpressionBadRequestGetProducts": {
+            "title": "Bad Request",
+            "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/bad-request",
+            "detail": "Filter expressions in select are not supported.",
+            "parameter": "Filter expressions in select are not supported.",
+            "selector": "(data[?(brand=='abc')].(**))"
+          }
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      }
+    },
+    "trait:ProdTraits.BadRequest:400": {
+      "description": "Bad Request.",
+      "examples": {
+        "application/problem+json": {
+          "title": "Bad Request",
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/validation",
+          "detail": "Maximum number of products you can request in one call is 25."
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      }
+    },
+    "trait:ProdTraits.NotFound:404": {
+      "description": "Not Found.",
+      "examples": {
+        "application/problem+json": {
+          "title": "Product Not Found",
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/product-not-found",
+          "detail": "No product with ID 'pple-ipod-shuffle' for site 'SiteGenesis' could be found.",
+          "productId": "pple-ipod-shuffle",
+          "siteId": "SiteGenesis"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      }
+    }
+  },
+  "paths": {
+    "/organizations/{organizationId}/products": {
+      "get": {
+        "description": "Allows access to multiple products by a single request. Only products that are online and assigned to a site catalog are returned. The maximum number of productIDs that can be requested are 24. Along with product details, the availability, product options, images, price, promotions, and variations for the valid products will be included, as appropriate.",
+        "operationId": "getProducts",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "The maximum number of requests permitted per minute.",
+                "type": "string"
+              },
+              "X-RateLimit-Remaining": {
+                "description": "The number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-Reset": {
+                "description": "The time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/json": {
+                "product_result": "Can not resolve Examples/product-result-example.raml"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/ProductResult"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/trait:ProdTraits.BadRequest2:400"
+          },
+          "401": {
+            "$ref": "#/responses/trait:ProdTraits.Unauthorized:401"
+          },
+          "429": {
+            "$ref": "#/responses/trait:ApiStandards.RateLimited:429"
+          }
+        },
+        "parameters": [
+          {
+            "description": "The property selector declaring which fields are included into the response payload. You can specify a single field name, a comma-separated list of names, or work with wildcards.You can also sepcify Array Operations.The select will be available, tentatively from october 2023.The exact date will be announced via changelog.",
+            "in": "query",
+            "name": "select",
+            "type": "string"
+          },
+          {
+            "required": true,
+            "description": "The IDs of the requested products (comma-separated, max 24 IDs).",
+            "type": "string",
+            "in": "query",
+            "name": "ids"
+          },
+          {
+            "description": "The optional inventory list IDs, for which the availability should be shown (comma-separated, max 5 inventoryListIDs).",
+            "type": "string",
+            "in": "query",
+            "name": "inventoryIds"
+          },
+          {
+            "description": "The currency mnemonic specified for price.",
+            "type": "string",
+            "in": "query",
+            "name": "currency"
+          },
+          {
+            "description": "The expand parameter. A comma separated list with the allowed values (availability, links, promotions, options, images, prices, variations, recommendations). All expand parameters are used for the request when no expand parameter is provided. The value \"none\" may be used to turn off all expand options.",
+            "type": "array",
+            "items": {
+              "enum": [
+                "availability",
+                "links",
+                "promotions",
+                "options",
+                "images",
+                "prices",
+                "variations",
+                "recommendations"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "expand"
+          },
+          {
+            "description": "The locale context.",
+            "type": "string",
+            "in": "query",
+            "name": "locale"
+          },
+          {
+            "description": "The flag that indicates whether to retrieve the whole image model for the requested product.",
+            "type": "boolean",
+            "in": "query",
+            "name": "allImages"
+          },
+          {
+            "description": "The flag that indicates whether to retrieve the per PriceBook prices and tiered prices (if available) for requested Products. Available end of June, 2021.",
+            "type": "boolean",
+            "in": "query",
+            "name": "perPricebook"
+          },
+          {
+            "$ref": "#/parameters/trait:CommerceCloudStandards.SiteSpecific:siteId"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/products/{id}": {
+      "get": {
+        "description": "Allows access to product details for a single product ID. Only products that are online and assigned to a site catalog are returned. Along with product details, the availability, images, price, bundled_products, set_products, recommedations, product options, variations, and promotions for the products will be included, as appropriate.",
+        "operationId": "getProduct",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "The maximum number of requests permitted per minute.",
+                "type": "string"
+              },
+              "X-RateLimit-Remaining": {
+                "description": "The number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-Reset": {
+                "description": "The time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/json": {
+                "product": "Can not resolve Examples/product-example.raml"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Product"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/trait:ProdTraits.BadRequest1:400"
+          },
+          "401": {
+            "$ref": "#/responses/trait:ProdTraits.Unauthorized:401"
+          },
+          "404": {
+            "$ref": "#/responses/trait:ProdTraits.NotFound:404"
+          },
+          "429": {
+            "$ref": "#/responses/trait:ApiStandards.RateLimited:429"
+          }
+        },
+        "parameters": [
+          {
+            "description": "The property selector declaring which fields are included into the response payload. You can specify a single field name, a comma-separated list of names, or work with wildcards.You can also sepcify Array Operations. The select will be available, tentatively from october 2023.The exact date will be announced via changelog.",
+            "in": "query",
+            "name": "select",
+            "type": "string"
+          },
+          {
+            "description": "The optional inventory list IDs, for which the availability should be shown (comma-separated, max 5 inventoryListIDs).",
+            "type": "string",
+            "in": "query",
+            "name": "inventoryIds"
+          },
+          {
+            "description": "The currency mnemonic specified for price.",
+            "type": "string",
+            "in": "query",
+            "name": "currency"
+          },
+          {
+            "description": "The expand parameter. A comma separated list with the allowed values (availability, bundled_products, links, promotions, options, images, prices, variations, set_products, recommendations). All expand parameters are used for the request when no expand parameter is provided. The value \"none\" may be used to turn off all expand options.",
+            "type": "array",
+            "items": {
+              "enum": [
+                "availability",
+                "bundled_products",
+                "links",
+                "promotions",
+                "options",
+                "images",
+                "prices",
+                "variations",
+                "set_products",
+                "recommendations"
+              ],
+              "type": "string"
+            },
+            "in": "query",
+            "name": "expand"
+          },
+          {
+            "description": "The locale context.",
+            "type": "string",
+            "in": "query",
+            "name": "locale"
+          },
+          {
+            "description": "The flag that indicates whether to retrieve the whole image model for the requested product.",
+            "type": "boolean",
+            "in": "query",
+            "name": "allImages"
+          },
+          {
+            "description": "The flag that indicates whether to retrieve the per PriceBook prices and tiered prices (if available) for requested Products. Available end of June, 2021.",
+            "type": "boolean",
+            "in": "query",
+            "name": "perPricebook"
+          },
+          {
+            "$ref": "#/parameters/trait:CommerceCloudStandards.SiteSpecific:siteId"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "maxLength": 100,
+          "description": "The ID of the requested product.",
+          "type": "string",
+          "in": "path",
+          "name": "id",
+          "required": true
+        },
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/categories": {
+      "get": {
+        "description": "When you use the URL template, the server returns multiple categories (a result object of category documents). You can use this template as a convenient way of obtaining multiple categories in a single request, instead of issuing separate requests for each category. You can specify up to 50 multiple IDs. You must enclose the list of IDs in parentheses. If a category identifier contains parenthesis or the separator sign, you must URL encode the character. The server only returns online categories.",
+        "operationId": "getCategories",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "The maximum number of requests permitted per minute.",
+                "type": "string"
+              },
+              "X-RateLimit-Remaining": {
+                "description": "The number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-Reset": {
+                "description": "The time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/json": {
+                "category": "Can not resolve Examples/category-result-example.raml"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/CategoryResult"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/trait:ProdTraits.BadRequest:400"
+          },
+          "401": {
+            "$ref": "#/responses/trait:ProdTraits.Unauthorized:401"
+          },
+          "429": {
+            "$ref": "#/responses/trait:ApiStandards.RateLimited:429"
+          }
+        },
+        "parameters": [
+          {
+            "required": true,
+            "description": "The comma separated list of category IDs (max 50).",
+            "type": "string",
+            "in": "query",
+            "name": "ids"
+          },
+          {
+            "minimum": 0,
+            "format": "int32",
+            "description": "Specifies how many levels of nested subcategories you want the server to return. The default value is 1. Valid values are 0, 1, or 2.",
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "type": "integer",
+            "in": "query",
+            "name": "levels"
+          },
+          {
+            "description": "The locale context.",
+            "type": "string",
+            "in": "query",
+            "name": "locale"
+          },
+          {
+            "$ref": "#/parameters/trait:CommerceCloudStandards.SiteSpecific:siteId"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/categories/{id}": {
+      "get": {
+        "description": "When you use the URL template below, the server returns a category identified by its ID; by default, the server\nalso returns the first level of subcategories, but you can specify another level by setting the levels\nparameter. The server only returns online categories.",
+        "operationId": "getCategory",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "The maximum number of requests permitted per minute.",
+                "type": "string"
+              },
+              "X-RateLimit-Remaining": {
+                "description": "The number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-Reset": {
+                "description": "The time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/json": {
+                "category": "Can not resolve Examples/category-example.raml"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Category"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/trait:ProdTraits.BadRequest:400"
+          },
+          "401": {
+            "$ref": "#/responses/trait:ProdTraits.Unauthorized:401"
+          },
+          "404": {
+            "$ref": "#/responses/trait:ProdTraits.NotFound:404"
+          },
+          "429": {
+            "$ref": "#/responses/trait:ApiStandards.RateLimited:429"
+          }
+        },
+        "parameters": [
+          {
+            "minimum": 0,
+            "format": "int32",
+            "type": "integer",
+            "in": "query",
+            "name": "levels"
+          },
+          {
+            "type": "string",
+            "in": "query",
+            "name": "locale"
+          },
+          {
+            "$ref": "#/parameters/trait:CommerceCloudStandards.SiteSpecific:siteId"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "maxLength": 256,
+          "description": "The ID of the requested category.",
+          "type": "string",
+          "in": "path",
+          "name": "id",
+          "required": true
+        },
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    }
+  }
+}

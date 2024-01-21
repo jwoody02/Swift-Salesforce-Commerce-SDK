@@ -1,0 +1,494 @@
+{
+  "swagger": "2.0",
+  "info": {},
+  "definitions": {
+    "ErrorResponse": {
+      "$ref": "#/definitions/ApiStandards.ErrorResponse"
+    },
+    "ApiStandards.ErrorResponse": {
+      "$ref": "#/definitions/ApiStandards.Error.Error"
+    },
+    "ApiStandards.Offset": {
+      "$ref": "#/definitions/pagination.offset"
+    },
+    "ApiStandards.Limit": {
+      "$ref": "#/definitions/pagination.limit"
+    },
+    "ApiStandards.Total": {
+      "$ref": "#/definitions/pagination.total"
+    },
+    "ApiStandards.Uuid": {
+      "$ref": "#/definitions/ApiStandards.Identifiers.UniversallyUniqueIdentifier"
+    },
+    "ApiStandards.AbsoluteUrl": {
+      "$ref": "#/definitions/ApiStandards.Uri.absoluteUrl"
+    },
+    "ApiStandards.ChangeControlled": {
+      "$ref": "#/definitions/ApiStandards.BaseTypes.ChangeControlledDataType"
+    },
+    "ApiStandards.BaseTypes.ChangeControlledDataType": {
+      "title": "ChangeControlled",
+      "description": "A type extending this type will provide metadata regarding changes\nto its data for each record. This information can be used to build\na change history of the records in this data type. \n\nWith the exception of APIs that query such history, these fields \nshould never appear in API input, and possibly not in API output; \ntheir values should be derived by the context in which the API is \ncalled from. For example, the `creationDate` property should come \nfrom the system time as opposed to being user provided.",
+      "properties": {
+        "creationDate": {
+          "description": "The timestamp of when this record was first created.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "modificationDate": {
+          "description": "The timestamp of when this record was most recently modified.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "pattern": "/.+/",
+          "description": "The user id of the user who created this record.",
+          "type": "string"
+        },
+        "lastModifiedBy": {
+          "pattern": "/.+/",
+          "description": "The user id of the user who most recently modified this record.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ApiStandards.Error.Error": {
+      "description": "Errors reported by all APIs correspond to this error document format. \nThis format follows the RFC [IETF rfc7807](https://tools.ietf.org/html/rfc7807). \nThis may include additional properties as necessary to provide additional details \nregarding the error message.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/not-found",
+          "type": "string"
+        },
+        "title": {
+          "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+          "example": "Not Found.",
+          "type": "string"
+        },
+        "detail": {
+          "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+          "example": "The requested resource was not found.",
+          "type": "string"
+        },
+        "instance": {
+          "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "/account/12345/msgs/abc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "ApiStandards.Identifiers.UniversallyUniqueIdentifier": {
+      "title": "Uuid",
+      "pattern": "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+      "minLength": 36,
+      "maxLength": 36,
+      "description": "A universally unique identifier (UUID) for the purpose of uniquely \nidentifying an object in the system. It is defined as a 128-bit hex \nencoded string of 32 characters separated into 5 groups in a pattern\n of `{8-4-4-4-12}` (36 characters total, including the `-` separators).",
+      "example": "5cb34ffb-2543-4052-aea6-226749e4e478",
+      "type": "string"
+    },
+    "pagination.offset": {
+      "default": 0,
+      "minimum": 0,
+      "format": "int64",
+      "description": "Used to retrieve the results based on a particular resource offset.",
+      "type": "integer"
+    },
+    "pagination.limit": {
+      "default": 10,
+      "minimum": 1,
+      "format": "int32",
+      "description": "Maximum records to retrieve per request, not to exceed the maximum defined. A limit must be at least 1 so at least one record is returned (if any match the criteria).",
+      "type": "integer"
+    },
+    "pagination.total": {
+      "default": 0,
+      "minimum": 0,
+      "format": "int64",
+      "description": "The total number of hits that match the search's criteria. This can be greater than the number of results returned as search results are pagenated.",
+      "type": "integer"
+    },
+    "ApiStandards.Uri.absoluteUrl": {
+      "pattern": "^(https?|ftp):\\/\\/([-\\.\\w])+(:[\\d]+)?(\\/[-\\w]*)*([-\\w\\&#\\/\\?=])*$",
+      "description": "An absolute URL, beginning with a protocol",
+      "type": "string",
+      "example": "https://www.salesforce.com"
+    }
+  },
+  "parameters": {
+    "trait:OffsetPaginated:offset": {
+      "in": "query",
+      "name": "offset",
+      "type": "string"
+    },
+    "trait:ApiStandards.DateConditionalRequest:If-Modified-Since": {
+      "description": "The server will return the requested resource only if it has been last modified after the given date",
+      "type": "string",
+      "in": "header",
+      "name": "If-Modified-Since"
+    },
+    "trait:ApiStandards.EtagConditionalRequest:If-None-Match": {
+      "description": "ETag that is required in the cache",
+      "type": "string",
+      "in": "header",
+      "name": "If-None-Match"
+    },
+    "trait:ApiStandards.OffsetPaginated:offset": {
+      "in": "query",
+      "name": "offset",
+      "type": "string"
+    }
+  },
+  "responses": {
+    "trait:Unauthorized:401": {
+      "description": "Indicates that the customerId URL parameter does not match the verified customer represented by the JWT token, which is not relevant when using OAuth, or indicates that the provided new address name is already used for the customer.\n",
+      "examples": {
+        "application/problem+json": {
+          "title": "Invalid Access Token",
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/invalid-access-token",
+          "detail": "The request is unauthorized, the access token is invalid.",
+          "accessToken": "iI6IjEiLCJhbGciOiJIUzI1NiIsInR5cCI6Ik"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      }
+    },
+    "trait:NotFound:404": {
+      "description": "Requested Resource Not Found\n",
+      "examples": {
+        "application/problem+json": {
+          "title": "Not Found",
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/not-found",
+          "detail": "No customer with ID 'abfTWMDZOgi3JPzkHjv9IhmziI' could be found.",
+          "customerId": "abfTWMDZOgi3JPzkHjv9IhmziI"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      }
+    },
+    "trait:BadRequest:400": {
+      "description": "CustomerId URL parameter does not match the verified customer represented by the JWT token.\n",
+      "examples": {
+        "application/problem+json": {
+          "title": "Invalid Customer",
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/invalid-customer",
+          "detail": "The customer is invalid."
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      }
+    },
+    "trait:CustomerExtProfileNotFound:404": {
+      "description": "Requested Resource Not Found\n",
+      "examples": {
+        "application/problem+json": {
+          "title": "Not Found",
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/not-found",
+          "detail": "No customer with external profile with ID 'abfTWMDZOgi3JPzkHjv9IhmziI' could be found.",
+          "externalId": "abfTWMDZOgi3JPzkHjv9IhmziI"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      }
+    },
+    "trait:CustomerExtProfileBadRequest:400": {
+      "description": "Customer ExternalId URL parameter is not valid.\n",
+      "examples": {
+        "application/problem+json": {
+          "title": "Invalid Customer External Profile",
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/invalid-customer-external-profile",
+          "detail": "The customer external profile is invalid."
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      }
+    },
+    "trait:CustomerAuthenticationFailed:401": {
+      "description": "Case of type credentials the username is unknown or the password does not match. In case of type session, the session is not active anymore or the dwsecuretoken value is invalid. In both cases the customer is disabled or locked.\n",
+      "examples": {
+        "application/problem+json": {
+          "title": "Authentication Failed",
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/authentication-failed",
+          "detail": "Customer authentication based on JohnSmith failed.",
+          "credentialType": "JohnSmith"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      }
+    },
+    "trait:OffsetPaginated:200": {
+      "description": "",
+      "headers": {
+        "SFDC-Pagination-Offset": {
+          "description": "The starting offset returned.",
+          "type": "string"
+        },
+        "SFDC-Pagination-Limit": {
+          "description": "The limit requested.",
+          "default": "<<defaultSize>>",
+          "type": "string"
+        },
+        "SFDC-Pagination-Total-Count": {
+          "type": "string"
+        },
+        "SFDC-Pagination-Result-Count": {
+          "format": "int64",
+          "description": "The number of results included in the response.",
+          "type": "number"
+        }
+      }
+    },
+    "trait:ApiStandards.RateLimited:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:ApiStandards.RateLimited2:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:ApiStandards.RateLimited3:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:ApiStandards.RateLimited4:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:ApiStandards.RateLimited5:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:ApiStandards.DateConditionalRequest:304": {
+      "description": "The resource has not been modified since the requested conditional date"
+    },
+    "trait:ApiStandards.OffsetPaginated:200": {
+      "description": "",
+      "headers": {
+        "SFDC-Pagination-Offset": {
+          "description": "The starting offset returned.",
+          "type": "string"
+        },
+        "SFDC-Pagination-Limit": {
+          "description": "The limit requested.",
+          "default": "<<defaultSize>>",
+          "type": "string"
+        },
+        "SFDC-Pagination-Total-Count": {
+          "type": "string"
+        },
+        "SFDC-Pagination-Result-Count": {
+          "format": "int64",
+          "description": "The number of results included in the response.",
+          "type": "number"
+        }
+      }
+    }
+  },
+  "paths": {}
+}

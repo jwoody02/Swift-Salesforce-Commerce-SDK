@@ -1,0 +1,373 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Shopper Promotions",
+    "description": "Get promotions by Promotion ID or Campaign ID",
+    "version": "v1"
+  },
+  "x-basePath": "{shortCode}.api.commercecloud.salesforce.com/pricing/shopper-promotions/{version}",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "definitions": {
+    "Promotion": {
+      "description": "Document representing a promotion.",
+      "properties": {
+        "calloutMsg": {
+          "description": "The localized call-out message of the promotion.",
+          "example": "$30 Fixed Shipping Amount Above 150",
+          "type": "string"
+        },
+        "currency": {
+          "description": "The currency that a promotion can be applied to. A null value means that the promotion applies to all allowed\n currencies.",
+          "example": "USD",
+          "type": "string"
+        },
+        "details": {
+          "description": "The localized detailed description of the promotion.",
+          "example": "$30 Fixed Shipping Amount Above 150",
+          "type": "string"
+        },
+        "endDate": {
+          "description": "The end date of the promotion. This property follows the ISO8601 date time format: yyyy-MM-dd'T'HH:mmZ . The time\n zone of the date time is always UTC.",
+          "example": "2015-07-04T21:00:00Z",
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "description": "The unique ID of the promotion.",
+          "example": "$30FixedShippingAmountAbove150",
+          "type": "string"
+        },
+        "image": {
+          "description": "The URL to the promotion image.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The localized name of the promotion.",
+          "example": "$30 Fixed Shipping Amount Above 150",
+          "type": "string"
+        },
+        "startDate": {
+          "description": "The start date of the promotion. This property follows the ISO8601 date time format: yyyy-MM-dd'T'HH:mmZ. The\n time zone of the date time is always UTC.",
+          "example": "2015-07-04T21:00:00Z",
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "PromotionResult": {
+      "description": "Result document containing an array of promotions.",
+      "example": "Can not resolve Examples/promotions_result.raml",
+      "properties": {
+        "count": {
+          "format": "int32",
+          "description": "The number of returned documents.",
+          "type": "integer"
+        },
+        "data": {
+          "description": "The array of promotion documents.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Promotion"
+          }
+        },
+        "total": {
+          "format": "int32",
+          "description": "The total number of documents.",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "count",
+        "data",
+        "total"
+      ],
+      "type": "object"
+    },
+    "ApiStandards.ErrorResponse": {
+      "$ref": "#/definitions/ApiStandards.Error.Error"
+    },
+    "ApiStandards.Error.Error": {
+      "description": "Errors reported by all APIs correspond to this error document format. \nThis format follows the RFC [IETF rfc7807](https://tools.ietf.org/html/rfc7807). \nThis may include additional properties as necessary to provide additional details \nregarding the error message.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/not-found",
+          "type": "string"
+        },
+        "title": {
+          "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+          "example": "Not Found.",
+          "type": "string"
+        },
+        "detail": {
+          "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+          "example": "The requested resource was not found.",
+          "type": "string"
+        },
+        "instance": {
+          "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "/account/12345/msgs/abc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "CommerceCloudStandards.SiteId": {
+      "minLength": 1,
+      "description": "The identifer of the site that a request is being made in the context of. Attributes might have site specific values, and some objects may only be assigned to specific sites",
+      "example": "SiteGenesis",
+      "type": "string"
+    }
+  },
+  "responses": {
+    "trait:ApiStandards.RateLimited:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:PromotionTraits.PromotionNotFound:404": {
+      "description": "Thrown when there is no promotion found with the given ID for the requested site.",
+      "examples": {
+        "application/json": {
+          "type": "/PromotionNotFoundException",
+          "detail": "There is no promotion found with the given ID for the requested site.",
+          "title": "Not Found",
+          "instance": "/foo"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/Error"
+      }
+    },
+    "trait:PromotionTraits.badrequest:400": {
+      "description": "Thrown when a start date but no end date was given, when an end date but no start date was given, or when the given end date is before the given start date.",
+      "examples": {
+        "application/json": {
+          "type": "/InvalidDateException",
+          "detail": "Invalid Start or End Date",
+          "title": "Invalid Start or End Date",
+          "instance": "/foo"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/Error"
+      }
+    }
+  },
+  "paths": {
+    "/organizations/{organizationId}/promotions": {
+      "get": {
+        "description": "Returns an array of enabled promotions for a list of specified IDs. In the request URL, you can specify up to 50 IDs. If you specify an ID that contains either parentheses or the separator characters, you must URL encode these characters. Each request returns only enabled promotions as the server does not consider promotion qualifiers or schedules.",
+        "operationId": "getPromotions",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Retrieved promotion information successfully.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "The maximum number of requests permitted per minute.",
+                "type": "string"
+              },
+              "X-RateLimit-Remaining": {
+                "description": "The number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-Reset": {
+                "description": "The time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/json": {
+                "promotion": "Can not resolve Examples/promotions_result.raml"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/PromotionResult"
+            }
+          },
+          "404": {
+            "$ref": "#/responses/trait:PromotionTraits.PromotionNotFound:404"
+          },
+          "429": {
+            "$ref": "#/responses/trait:ApiStandards.RateLimited:429"
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "siteId",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "maxLength": 256,
+            "type": "string",
+            "in": "query",
+            "name": "ids",
+            "required": true
+          },
+          {
+            "type": "string",
+            "in": "query",
+            "name": "locale"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/promotions/campaigns/{campaignId}": {
+      "get": {
+        "description": "Handles get promotion by filter criteria. Returns an array of enabled promotions matching the specified filter\ncriteria. In the request URL, you must provide a campaign_id parameter, and you can optionally specify a date\nrange by providing start_date and end_date parameters. Both parameters are required to specify a date range, as \nomitting one causes the server to return a MissingParameterException fault. Each request returns only enabled\npromotions, since the server does not consider promotion qualifiers or schedules.",
+        "operationId": "getPromotionsForCampaign",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Retrieved Promotion Information successfully.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "The maximum number of requests permitted per minute.",
+                "type": "string"
+              },
+              "X-RateLimit-Remaining": {
+                "description": "The number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-Reset": {
+                "description": "The time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/json": {
+                "promotion": "Can not resolve Examples/promotions_result.raml"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/PromotionResult"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/trait:PromotionTraits.badrequest:400"
+          },
+          "404": {
+            "$ref": "#/responses/trait:PromotionTraits.PromotionNotFound:404"
+          },
+          "429": {
+            "$ref": "#/responses/trait:ApiStandards.RateLimited:429"
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "siteId",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "The start date of the promotion in ISO8601 date time format: yyyy-MM-dd'T'HH:mmZ",
+            "type": "string",
+            "in": "query",
+            "name": "startDate"
+          },
+          {
+            "description": "The end date of the promotion in ISO8601 date time format: yyyy-MM-dd'T'HH:mmZ",
+            "type": "string",
+            "in": "query",
+            "name": "endDate"
+          },
+          {
+            "description": "The currency mnemonic specified for price. This parameter is effective only for product suggestions.",
+            "type": "string",
+            "in": "query",
+            "name": "currency"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Find the promotions assigned to this campaign (mandatory).",
+          "type": "string",
+          "in": "path",
+          "name": "campaignId",
+          "required": true
+        },
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    }
+  }
+}

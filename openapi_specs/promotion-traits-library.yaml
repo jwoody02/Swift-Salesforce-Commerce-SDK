@@ -1,0 +1,65 @@
+{
+  "swagger": "2.0",
+  "info": {},
+  "definitions": {
+    "Error": {
+      "properties": {
+        "type": {
+          "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "https://example.com/probs/out-of-credit",
+          "type": "string"
+        },
+        "title": {
+          "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+          "example": "You do not have enough credit.",
+          "type": "string"
+        },
+        "detail": {
+          "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+          "example": "Your current balance is 30, but that costs 50.",
+          "type": "string"
+        },
+        "instance": {
+          "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "/account/12345/msgs/abc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    }
+  },
+  "responses": {
+    "trait:PromotionNotFound:404": {
+      "description": "Thrown when there is no promotion found with the given ID for the requested site.",
+      "examples": {
+        "application/json": {
+          "type": "/PromotionNotFoundException",
+          "detail": "There is no promotion found with the given ID for the requested site.",
+          "title": "Not Found",
+          "instance": "/foo"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/Error"
+      }
+    },
+    "trait:badrequest:400": {
+      "description": "Thrown when a start date but no end date was given, when an end date but no start date was given, or when the given end date is before the given start date.",
+      "examples": {
+        "application/json": {
+          "type": "/InvalidDateException",
+          "detail": "Invalid Start or End Date",
+          "title": "Invalid Start or End Date",
+          "instance": "/foo"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/Error"
+      }
+    }
+  },
+  "paths": {}
+}

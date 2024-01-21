@@ -1,0 +1,1908 @@
+{
+  "swagger": "2.0",
+  "info": {},
+  "securityDefinitions": {
+    "ApiStandards.GDoT": {
+      "description": "Salesforce Cloud-to-Cloud Authentication.\n",
+      "type": "apiKey",
+      "in": "header",
+      "name": "Authorization"
+    },
+    "CommerceCloudStandards.AmOAuth2": {
+      "description": "AccountManager OAuth 2.0 bearer token Authentication.\n",
+      "type": "oauth2",
+      "flow": "accessCode",
+      "authorizationUrl": "https://account.demandware.com/dwsso/oauth2/authorize",
+      "tokenUrl": "https://account.demandware.com/dwsso/oauth2/access_token",
+      "scopes": {}
+    },
+    "CommerceCloudStandards.ShopperToken": {
+      "description": "`ShopperToken` authentication follows the authorization code grant flow, as defined by the OAuth 2.0 standard. Depending on the type of OAuth client (public or private), this authorization flow has further requirements. For a detailed description of the authorization flow, see the [SLAS overview](https://developer.salesforce.com/docs/commerce/commerce-api/references?meta=shopper-login:Summary).\nA shopper token allows you to access the Shopper API endpoints of both OCAPI and the B2C Commerce API. These endpoints can be used to build headless storefronts and other applications.\nThe `ShopperToken` security scheme is a parent of other security schemes, such as `ShopperTokenTsob`. A Shopper API endpoint can require a specific child scheme (`ShopperTokenTsob`, for example) that cannot be accessed with a regular shopper token.\n",
+      "type": "apiKey",
+      "in": "header",
+      "name": "Authorization"
+    },
+    "CommerceCloudStandards.BearerToken": {
+      "description": "A security scheme that supplements APIs secured with `AmOAuth2` to support the usage of the mocking service.  Expects a valid Bearer token passed in the 'Authorization' header to permit API access.",
+      "type": "apiKey",
+      "in": "header",
+      "name": "Authorization"
+    },
+    "CommerceCloudStandards.ShopperTokenTsob": {
+      "description": "`ShopperTokenTsob` (Tsob = trusted system on behalf) is a child of the `ShopperToken` security scheme and extends the functionality of `ShopperToken` for specific use cases. \nA token of type `ShopperTokenTsob` allows you to access Shopper API endpoints, including OCAPI and Salesforce Commerce API for headless applications. Besides endpoints that require this specific subtype, all other endpoints secured by the `ShopperToken` parent scheme can be accessed with a `ShopperTokenTsob`. \nTo learn how to get a `ShopperTokenTsob` token, see [getTrustedSystemAccessToken](https://developer.salesforce.com/docs/commerce/commerce-api/references?meta=shopper-login:getTrustedSystemAccessToken).\n",
+      "type": "oauth2",
+      "flow": "application",
+      "tokenUrl": "https://{short-code}.api.commercecloud.salesforce.com/shopper/auth/v1/organizations/{organizationId}/oauth2/trusted-system/token",
+      "scopes": {}
+    }
+  },
+  "definitions": {
+    "ProductRef": {
+      "description": "Document representing a product reference.",
+      "properties": {
+        "id": {
+          "description": "The ID of the product reference.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "ProductSearchHit": {
+      "description": "Document representing a product search hit.",
+      "properties": {
+        "currency": {
+          "$ref": "#/definitions/CommerceCloudStandards.CurrencyCode"
+        },
+        "hitType": {
+          "description": "The type information for the search hit.",
+          "type": "string"
+        },
+        "image": {
+          "description": "The first image of the product hit for the configured viewtype.",
+          "$ref": "#/definitions/Image"
+        },
+        "orderable": {
+          "description": "A flag indicating whether the product is orderable.",
+          "type": "boolean"
+        },
+        "price": {
+          "format": "double",
+          "description": "The sales price of the product. In complex products, like master or set, this is the minimum price of\n related child products.",
+          "type": "number"
+        },
+        "priceMax": {
+          "format": "double",
+          "description": "The maximum sales of related child products in complex products like master or set.",
+          "type": "number"
+        },
+        "prices": {
+          "description": "The prices map with price book IDs and their values.",
+          "type": "object",
+          "additionalProperties": {
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "productId": {
+          "description": "The ID (SKU) of the product.",
+          "type": "string"
+        },
+        "productName": {
+          "description": "The localized name of the product.",
+          "type": "string"
+        },
+        "productType": {
+          "description": "The type information for the product.",
+          "$ref": "#/definitions/ProductType"
+        },
+        "representedProduct": {
+          "description": "The first represented product.",
+          "$ref": "#/definitions/ProductRef"
+        },
+        "representedProducts": {
+          "description": "All the represented products.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProductRef"
+          }
+        },
+        "variationAttributes": {
+          "description": "The array of represented variation attributes, for the master product only. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VariationAttribute"
+          }
+        }
+      },
+      "required": [
+        "productId"
+      ],
+      "type": "object"
+    },
+    "ProductSearchRefinement": {
+      "description": "Document representing a product search refinement attribute.",
+      "properties": {
+        "attributeId": {
+          "description": "The ID of the search refinement attribute. In the case of an attribute refinement, this is the attribute ID.\n Custom attributes are marked by the prefix \"c_\" (for example, \"c_refinementColor\"). In the case of a\n category refinement, the ID must be \"cgid\". In the case of a price refinement, the ID must be \"price\".",
+          "type": "string"
+        },
+        "label": {
+          "description": "The localized label of the refinement.",
+          "type": "string"
+        },
+        "values": {
+          "description": "The sorted array of refinement values. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProductSearchRefinementValue"
+          }
+        }
+      },
+      "required": [
+        "attributeId"
+      ],
+      "type": "object"
+    },
+    "ProductSearchRefinementValue": {
+      "description": "Document representing a product search refinement value.",
+      "properties": {
+        "description": {
+          "description": "The localized description of the refinement value.",
+          "type": "string"
+        },
+        "hitCount": {
+          "format": "int32",
+          "description": "The number of search hits when selecting the refinement value. Can be 0.",
+          "type": "integer"
+        },
+        "label": {
+          "description": "The localized label of the refinement value.",
+          "type": "string"
+        },
+        "presentationId": {
+          "description": "The optional presentation ID associated with the refinement value.\n The presentation ID can be used, for example, to associate an ID with\n an HTML widget.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The refinement value. In the case of an attribute refinement, this is the bucket,\n the attribute value, or a value range. In the case of a category refinement, this is the\n category ID. In the case of a price refinement, this is the price range. Ranges are\n enclosed by parentheses and separated by \"..\"; for example, \"(100..999)\" and \"(Aa..Fa)\"\n are valid ranges.",
+          "type": "string"
+        },
+        "values": {
+          "description": "The array of hierarchical refinement values. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProductSearchRefinementValue"
+          }
+        }
+      },
+      "required": [
+        "hitCount",
+        "label",
+        "value"
+      ],
+      "type": "object"
+    },
+    "ProductSearchSortingOption": {
+      "description": "Document representing a product search sorting option.",
+      "properties": {
+        "id": {
+          "description": "The ID of the sorting option.",
+          "type": "string"
+        },
+        "label": {
+          "description": "The localized label of the sorting option.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "type": "object"
+    },
+    "ProductType": {
+      "description": "Document representing a product type.",
+      "properties": {
+        "bundle": {
+          "description": "A flag indicating whether the product is a bundle.",
+          "type": "boolean"
+        },
+        "item": {
+          "description": "A flag indicating whether the product is a standard item.",
+          "type": "boolean"
+        },
+        "master": {
+          "description": "A flag indicating whether the product is a master.",
+          "type": "boolean"
+        },
+        "option": {
+          "description": "A flag indicating whether the product is an option.",
+          "type": "boolean"
+        },
+        "set": {
+          "description": "A flag indicating whether the product is a set.",
+          "type": "boolean"
+        },
+        "variant": {
+          "description": "A flag indicating whether the product is a variant.",
+          "type": "boolean"
+        },
+        "variationGroup": {
+          "description": "A flag indicating whether the product is a variation group.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "VariationAttributeValue": {
+      "description": "Document representing a variation attribute value.",
+      "properties": {
+        "description": {
+          "description": "The localized description of the variation value.",
+          "type": "string"
+        },
+        "image": {
+          "description": "The first product image for the configured viewtype and this variation value.",
+          "$ref": "#/definitions/Image"
+        },
+        "imageSwatch": {
+          "description": "The first product image for the configured viewtype and this variation value. Typically the swatch image.",
+          "$ref": "#/definitions/Image"
+        },
+        "name": {
+          "description": "The localized display name of the variation value.",
+          "type": "string"
+        },
+        "orderable": {
+          "description": "A flag indicating whether at least one variant with this variation attribute value is available to sell.",
+          "type": "boolean"
+        },
+        "value": {
+          "minLength": 1,
+          "description": "The actual variation value.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "type": "object"
+    },
+    "VariationAttribute": {
+      "description": "Document representing a variation attribute.",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "description": "The ID of the variation attribute.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The localized display name of the variation attribute.",
+          "type": "string"
+        },
+        "values": {
+          "description": "The sorted array of variation values. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VariationAttributeValue"
+          }
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "ProductSearchResult": {
+      "description": "Document representing a product search result.",
+      "properties": {
+        "limit": {
+          "format": "int32",
+          "description": "The number of returned documents.",
+          "$ref": "#/definitions/ApiStandards.Limit"
+        },
+        "hits": {
+          "description": "The sorted array of search hits. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProductSearchHit"
+          }
+        },
+        "query": {
+          "description": "The query string that was searched for.",
+          "type": "string"
+        },
+        "refinements": {
+          "description": "The sorted array of search refinements. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProductSearchRefinement"
+          }
+        },
+        "searchPhraseSuggestions": {
+          "description": "The suggestion given by the system for the submitted search phrase.",
+          "$ref": "#/definitions/Suggestion"
+        },
+        "selectedRefinements": {
+          "description": "A map of selected refinement attribute ID or value pairs. The sorting order is the same as in request URL.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "selectedSortingOption": {
+          "description": "The ID of the applied sorting option.",
+          "type": "string"
+        },
+        "sortingOptions": {
+          "description": "The sorted array of search sorting options. This array can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProductSearchSortingOption"
+          }
+        },
+        "offset": {
+          "minimum": 0,
+          "format": "int32",
+          "description": "The zero-based index of the first search hit to include in the result.",
+          "type": "integer"
+        },
+        "total": {
+          "format": "int32",
+          "description": "The total number of documents.",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "limit",
+        "hits",
+        "query",
+        "refinements",
+        "searchPhraseSuggestions",
+        "sortingOptions",
+        "offset",
+        "total"
+      ],
+      "type": "object"
+    },
+    "Image": {
+      "properties": {
+        "alt": {
+          "type": "string"
+        },
+        "disBaseLink": {
+          "type": "string"
+        },
+        "link": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "link"
+      ],
+      "type": "object"
+    },
+    "SuggestedPhrase": {
+      "description": "Document representing a suggested search phrase.",
+      "properties": {
+        "exactMatch": {
+          "description": "Returns whether this suggested phrase exactly matches the user input search phrase.",
+          "type": "boolean"
+        },
+        "phrase": {
+          "description": "Returns the suggested search phrase.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "exactMatch",
+        "phrase"
+      ],
+      "type": "object"
+    },
+    "SuggestedTerms": {
+      "description": "Document representing a list of suggested terms for each term of a search phrase.",
+      "properties": {
+        "originalTerm": {
+          "description": "Returns the original term that the suggested terms relates to.",
+          "type": "string"
+        },
+        "terms": {
+          "description": "Returns the suggested terms.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SuggestedTerm"
+          }
+        }
+      },
+      "required": [
+        "originalTerm"
+      ],
+      "type": "object"
+    },
+    "SuggestedTerm": {
+      "description": "Document representing a suggested term.",
+      "properties": {
+        "completed": {
+          "description": "Returns whether this term value is a completion match.",
+          "type": "boolean"
+        },
+        "corrected": {
+          "description": "Returns whether this term value is a correction match.",
+          "type": "boolean"
+        },
+        "exactMatch": {
+          "description": "Returns whether this term value is a exact match.",
+          "type": "boolean"
+        },
+        "value": {
+          "description": "Returns the term value.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "completed",
+        "corrected",
+        "exactMatch",
+        "value"
+      ],
+      "type": "object"
+    },
+    "Suggestion": {
+      "description": "Document representing a suggestion.",
+      "properties": {
+        "suggestedPhrases": {
+          "description": "A list of suggested phrases. This list can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SuggestedPhrase"
+          }
+        },
+        "suggestedTerms": {
+          "description": "A list of suggested terms. This list can be empty.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SuggestedTerms"
+          }
+        }
+      },
+      "required": [
+        "suggestedTerms"
+      ],
+      "type": "object"
+    },
+    "SuggestedProduct": {
+      "description": "Document representing a product search hit.",
+      "properties": {
+        "currency": {
+          "$ref": "#/definitions/CommerceCloudStandards.CurrencyCode"
+        },
+        "price": {
+          "format": "double",
+          "description": "The sales price of the product. In the case of complex products like a master or a set, this is the minimum price of\n related child products.",
+          "type": "number"
+        },
+        "productId": {
+          "description": "The ID (SKU) of the product.",
+          "type": "string"
+        },
+        "productName": {
+          "description": "The localized name of the product.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "currency",
+        "price",
+        "productId",
+        "productName"
+      ],
+      "type": "object"
+    },
+    "SuggestedCategory": {
+      "properties": {
+        "id": {
+          "description": "The ID of the category.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The localized name of the category.",
+          "type": "string"
+        },
+        "parentCategoryName": {
+          "description": "The name of the parent category.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "parentCategoryName"
+      ],
+      "type": "object"
+    },
+    "CategorySuggestions": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Suggestion"
+        },
+        {
+          "properties": {
+            "categories": {
+              "description": "The sorted list of suggested categories. This list can be empty.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SuggestedCategory"
+              }
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "ProductSuggestions": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Suggestion"
+        },
+        {
+          "properties": {
+            "products": {
+              "description": "The sorted list of suggested products. This list can be empty.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SuggestedProduct"
+              }
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "BrandSuggestions": {
+      "description": "The suggested brand names are listed in suggested phrases. If this list is empty, no brand suggestion for a given search phrase was found.",
+      "$ref": "#/definitions/Suggestion"
+    },
+    "CustomSuggestions": {
+      "description": "The custom suggestions are listed in suggested phrases. If this list is empty, no custom suggestion for the given search phrase was found.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Suggestion"
+        },
+        {
+          "properties": {
+            "customSuggestion": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "SuggestionResult": {
+      "description": "Document representing a search suggestion result.",
+      "properties": {
+        "brandSuggestions": {
+          "description": "Returns the suggested brands.",
+          "$ref": "#/definitions/BrandSuggestions"
+        },
+        "categorySuggestions": {
+          "description": "Returns the suggested categories.",
+          "$ref": "#/definitions/CategorySuggestions"
+        },
+        "productSuggestions": {
+          "description": "Returns the suggested products.",
+          "$ref": "#/definitions/ProductSuggestions"
+        },
+        "customSuggestion": {
+          "description": "Returns custom suggestions.",
+          "$ref": "#/definitions/CustomSuggestions"
+        },
+        "searchPhrase": {
+          "description": "The query phrase (q) for which suggestions where made.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "searchPhrase"
+      ],
+      "type": "object"
+    },
+    "ApiStandards.ErrorResponse": {
+      "$ref": "#/definitions/ApiStandards.Error.Error"
+    },
+    "ApiStandards.Offset": {
+      "$ref": "#/definitions/ApiStandards.Pagination.offset"
+    },
+    "ApiStandards.Limit": {
+      "$ref": "#/definitions/ApiStandards.Pagination.limit"
+    },
+    "ApiStandards.Total": {
+      "$ref": "#/definitions/ApiStandards.Pagination.total"
+    },
+    "ApiStandards.Uuid": {
+      "$ref": "#/definitions/ApiStandards.Identifiers.UniversallyUniqueIdentifier"
+    },
+    "ApiStandards.AbsoluteUrl": {
+      "$ref": "#/definitions/ApiStandards.Uri.absoluteUrl"
+    },
+    "ApiStandards.ChangeControlled": {
+      "$ref": "#/definitions/ApiStandards.BaseTypes.ChangeControlledDataType"
+    },
+    "ApiStandards.BaseTypes.ChangeControlledDataType": {
+      "title": "ChangeControlled",
+      "description": "A type extending this type will provide metadata regarding changes\nto its data for each record. This information can be used to build\na change history of the records in this data type. \n\nWith the exception of APIs that query such history, these fields \nshould never appear in API input, and possibly not in API output; \ntheir values should be derived by the context in which the API is \ncalled from. For example, the `creationDate` property should come \nfrom the system time as opposed to being user provided.",
+      "properties": {
+        "creationDate": {
+          "description": "The timestamp of when this record was first created.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "modificationDate": {
+          "description": "The timestamp of when this record was most recently modified.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "pattern": "/.+/",
+          "description": "The user id of the user who created this record.",
+          "type": "string"
+        },
+        "lastModifiedBy": {
+          "pattern": "/.+/",
+          "description": "The user id of the user who most recently modified this record.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ApiStandards.Error.Error": {
+      "description": "Errors reported by all APIs correspond to this error document format. \nThis format follows the RFC [IETF rfc7807](https://tools.ietf.org/html/rfc7807). \nThis may include additional properties as necessary to provide additional details \nregarding the error message.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/not-found",
+          "type": "string"
+        },
+        "title": {
+          "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+          "example": "Not Found.",
+          "type": "string"
+        },
+        "detail": {
+          "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+          "example": "The requested resource was not found.",
+          "type": "string"
+        },
+        "instance": {
+          "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "/account/12345/msgs/abc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "ApiStandards.Identifiers.UniversallyUniqueIdentifier": {
+      "title": "Uuid",
+      "pattern": "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+      "minLength": 36,
+      "maxLength": 36,
+      "description": "A universally unique identifier (UUID) for the purpose of uniquely \nidentifying an object in the system. It is defined as a 128-bit hex \nencoded string of 32 characters separated into 5 groups in a pattern\n of `{8-4-4-4-12}` (36 characters total, including the `-` separators).",
+      "example": "5cb34ffb-2543-4052-aea6-226749e4e478",
+      "type": "string"
+    },
+    "ApiStandards.Pagination.offset": {
+      "default": 0,
+      "minimum": 0,
+      "format": "int64",
+      "description": "Used to retrieve the results based on a particular resource offset.",
+      "type": "integer"
+    },
+    "ApiStandards.Pagination.limit": {
+      "default": 10,
+      "minimum": 1,
+      "format": "int32",
+      "description": "Maximum records to retrieve per request, not to exceed the maximum defined. A limit must be at least 1 so at least one record is returned (if any match the criteria).",
+      "type": "integer"
+    },
+    "ApiStandards.Pagination.total": {
+      "default": 0,
+      "minimum": 0,
+      "format": "int64",
+      "description": "The total number of hits that match the search's criteria. This can be greater than the number of results returned as search results are pagenated.",
+      "type": "integer"
+    },
+    "ApiStandards.Uri.absoluteUrl": {
+      "pattern": "^(https?|ftp):\\/\\/([-\\.\\w])+(:[\\d]+)?(\\/[-\\w]*)*([-\\w\\&#\\/\\?=])*$",
+      "description": "An absolute URL, beginning with a protocol",
+      "type": "string",
+      "example": "https://www.salesforce.com"
+    },
+    "CommerceCloudStandards.ISO.ISOCurrency": {
+      "pattern": "^[A-Z][A-Z][A-Z]$",
+      "description": "A three letter uppercase currency code conforming to the [ISO 4217](https://www.iso.org/iso-4217-currency-codes.html) standard.",
+      "example": "USD",
+      "type": "string"
+    },
+    "CommerceCloudStandards.ISO.NoValue": {
+      "default": "N/A",
+      "description": "A specialized value indicating the lack of definition of a currency, for example, if the value of the monetary value of the currency is an undefined number.",
+      "example": "N/A",
+      "enum": [
+        "N/A"
+      ],
+      "type": "string"
+    },
+    "CommerceCloudStandards.ISO.Currency": {
+      "description": "A three letter uppercase currency code conforming to the [ISO 4217](https://www.iso.org/iso-4217-currency-codes.html) standard, or the string `N/A` indicating that a currency is not applicable.",
+      "type": "string"
+    },
+    "CommerceCloudStandards.ISO.MoneyMnemonic": {
+      "description": "A combination of a Currency and an amount of that Currency.",
+      "type": "object",
+      "properties": {
+        "currencyMnemonic": {
+          "$ref": "#/definitions/CommerceCloudStandards.ISO.Currency"
+        },
+        "value": {
+          "format": "double",
+          "description": "The amount of money for the given currency.",
+          "example": 1234.56,
+          "type": "number"
+        }
+      }
+    },
+    "CommerceCloudStandards.ISO.Country": {
+      "pattern": "^[A-Z][A-Z]$",
+      "description": "A two letter uppercase country code conforming to the [ISO 3166-1](https://www.iso.org/iso-3166-country-codes.html) alpha-2 standard.",
+      "example": "US",
+      "type": "string"
+    },
+    "CommerceCloudStandards.ISO.Language": {
+      "pattern": "^[a-z][a-z]$",
+      "description": "A two letter lowercase language code conforming to the [ISO 639-1](https://www.iso.org/iso-639-language-codes.html) standard. Additionally, this may be used to submit requests with the header parameter `Accept-Language`, following [RFC 2616](https://tools.ietf.org/html/rfc2616) & [RFC 1766](https://tools.ietf.org/html/rfc1766).",
+      "example": "en",
+      "type": "string"
+    },
+    "CommerceCloudStandards.ISO.LanguageCountry": {
+      "pattern": "^[a-z][a-z]-[A-Z][A-Z]$",
+      "description": "A concatenated version of the standard Language and Country codes, combined with a hyphen '`-`'.",
+      "example": "en-US",
+      "type": "string"
+    },
+    "CommerceCloudStandards.ISO.Locale": {
+      "description": "A descriptor for a geographical region by both a language and country code. By combining these two, regional differences in a language can be addressed, such as with the request header parameter `Accept-Language` following [RFC 2616](https://tools.ietf.org/html/rfc2616) & [RFC 1766](https://tools.ietf.org/html/rfc1766). This can also just refer to a language code, also RFC 2616/1766 compliant, as a default if there is no specific match for a country. Finally, can also be used to define default behavior if there is no locale specified.",
+      "type": "string"
+    },
+    "CommerceCloudStandards.ISO.DefaultFallback": {
+      "default": "default",
+      "description": "A specialized value indicating the system default values for locales.",
+      "example": "default",
+      "enum": [
+        "default"
+      ],
+      "type": "string"
+    },
+    "CommerceCloudStandards.ISO.L10nString": {
+      "description": "A string with content that can differ by locale. Rather than being stored as an individual value, it is stored as a map of a LocaleCode and the translated value in that locale. \n\nAcceptable keys are two-character language codes, the language code followed by a hyphen and a two-character country code, or the term default, representing a fallback locale if no other locale could be resolved.",
+      "example": {
+        "default": "The quick brown fox jumps over the lazy dog.",
+        "en": "The quick brown fox jumps over the lazy dog.",
+        "en-US": "The quick brown fox jumps over the lazy dog.",
+        "en-CA": "The quick brown fox jumps over the lazy dog.",
+        "es": "El rápido zorro marrón salta sobre el perro perezoso."
+      },
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "CommerceCloudStandards.AdditionalProperties.NoPropertiesAllowed": {
+      "description": "This type is intended as an abstract super type that indicates that no additional properties are supported for this type and its sub types. All types that do not support any additional properties should inherit from this type. This type is not allowed to be used directly in any API and should always be extended.",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "CommerceCloudStandards.AdditionalProperties.SpecifiedPropertiesAllowed": {
+      "description": "This type is intended as an abstract super type that indicates that additional properties are supported for this type and its sub types (unless one of those subtypes inherits from `ClosedObject`). All types that support any additional properties should inherit from this type. This type is not allowed to be used directly in any API and should always be extended.\n\nTo indicate that the properties were defined and expected to be handled as additional properties, they are expected to be prefixed with a `c_`. The type will reject any property that does not fit this pattern, only allowing additional properties beginning with the known prefix.",
+      "type": "object",
+      "additionalProperties": {
+        "title": "Additional Property Support",
+        "description": "This type supports additional properties passed along with the defined properties of this API. To indicate that the properties were defined and expected to be handled as additional properties, they are expected to be prefixed with a `c_`. The type will reject any property that does not fit this pattern, only allowing additional properties beginning with the known prefix.",
+        "example": "c_faxNumber",
+        "type": "string"
+      }
+    },
+    "CommerceCloudStandards.AttributeDefinitions.AttributeDefinition": {
+      "description": "A collection of metadata describing the properties of a type. This can include properties that are provided by the system, and properties that are defined by the merchant to extend the base types.",
+      "$ref": "#/definitions/CommerceCloudStandards.AdditionalProperties.NoPropertiesAllowed"
+    },
+    "CommerceCloudStandards.AttributeDefinitions.PropertyValueDefinition": {
+      "description": "Represents an actual or possible value for a property",
+      "$ref": "#/definitions/CommerceCloudStandards.AdditionalProperties.NoPropertiesAllowed"
+    },
+    "CommerceCloudStandards.Pagination.Offset": {
+      "default": 0,
+      "minimum": 0,
+      "format": "int64",
+      "description": "Used to retrieve the results based on a particular resource offset.",
+      "type": "integer"
+    },
+    "CommerceCloudStandards.Pagination.Limit": {
+      "default": 10,
+      "minimum": 1,
+      "format": "int32",
+      "description": "Maximum records to retrieve per request, not to exceed the maximum defined. A limit must be at least 1 so at least one record is returned (if any match the criteria).",
+      "type": "integer"
+    },
+    "CommerceCloudStandards.Pagination.Total": {
+      "default": 0,
+      "minimum": 0,
+      "format": "int64",
+      "description": "The total number of hits that match the search's criteria. This can be greater than the number of results returned as search results are pagenated.",
+      "type": "integer"
+    },
+    "CommerceCloudStandards.Search.BoolFilter": {
+      "description": "Allows you to combine other filters into (possibly recursive) logical expression trees. A boolean filter is configured with a boolean operator (AND, OR, NOT) and a list of filters the operator relates to. If multiple filters are given to a boolean NOT operator, this is interpreted as a NOT upon a boolean AND of the given filters.",
+      "example": {
+        "operator": "and",
+        "filters": [
+          {
+            "termFilter": {
+              "field": "id",
+              "operator": "is",
+              "values": [
+                "myId"
+              ]
+            }
+          },
+          {
+            "termFilter": {
+              "field": "couponId",
+              "operator": "is",
+              "values": [
+                "couponOne"
+              ]
+            }
+          }
+        ]
+      },
+      "type": "object",
+      "properties": {
+        "filters": {
+          "description": "A list of filters, which are logically combined by an operator.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "operator": {
+          "description": "The logical operator the filters are combined with.",
+          "enum": [
+            "and",
+            "or",
+            "not"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "operator"
+      ]
+    },
+    "CommerceCloudStandards.Search.BoolQuery": {
+      "description": "A boolean query allows construction of full logical expression trees consisting of other queries (usually term and text queries). A boolean query basically has 3 sets of clauses:\n  \n  * must, which combines as an `AND`\n  * should, which combines as an `OR`, and\n  * must_not, which combines as a `NOT`.\n  \nIf 'must', 'mustNot', or 'should' appear in the same boolean query, they are combined logically using the AND operator. Syntactically, this amounts to:\n\n    (must-1 AND must-1 AND ...)\n      AND (should-1 OR should-2 OR ...)\n      AND NOT (must_not-1 OR must_not-2 OR ...)\n",
+      "type": "object",
+      "example": {
+        "must": [
+          {
+            "textQuery": {
+              "fields": [
+                "couponId"
+              ],
+              "searchPhrase": "DEAL"
+            }
+          }
+        ],
+        "should": [
+          {
+            "textQuery": {
+              "fields": [
+                "couponId"
+              ],
+              "searchPhrase": "DEAL"
+            }
+          },
+          {
+            "textQuery": {
+              "fields": [
+                "couponId",
+                "description"
+              ],
+              "searchPhrase": "sale"
+            }
+          }
+        ],
+        "must_not": [
+          {
+            "textQuery": {
+              "fields": [
+                "description"
+              ],
+              "searchPhrase": "Big bargain"
+            }
+          }
+        ]
+      },
+      "properties": {
+        "must": {
+          "description": "List of queries to be evaluated as an `AND`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mustNot": {
+          "description": "List of queries to be evaluated as an `NOT`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "should": {
+          "description": "List of queries to be evaluated as an `OR`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "CommerceCloudStandards.Search.Filter": {
+      "minProperties": 1,
+      "maxProperties": 1,
+      "description": "Contains a set of objects that define criteria used to select records. A filter can contain one of the following:\n  * TermFilter\n   - Matches records where a field (or fields) exactly match some simple value (including null).\n  * RangeFilter\n   - Matches records where a field value lies in a specified range.\n  * Range2Filter\n   - Matches records in a specified range across fields.\n  * QueryFilter\n   - Matches records based on a query.\n  * BoolFilter\n   - Provides filtering of records using a set of filters combined using a specified operator.",
+      "example": {
+        "termFilter": {
+          "field": "enabled",
+          "operator": "is",
+          "values": [
+            false
+          ]
+        }
+      },
+      "type": "object",
+      "properties": {
+        "boolFilter": {
+          "$ref": "#/definitions/CommerceCloudStandards.Search.BoolFilter"
+        },
+        "queryFilter": {
+          "$ref": "#/definitions/CommerceCloudStandards.Search.QueryFilter"
+        },
+        "range2Filter": {
+          "$ref": "#/definitions/CommerceCloudStandards.Search.Range2Filter"
+        },
+        "rangeFilter": {
+          "$ref": "#/definitions/CommerceCloudStandards.Search.RangeFilter"
+        },
+        "termFilter": {
+          "$ref": "#/definitions/CommerceCloudStandards.Search.TermFilter"
+        }
+      }
+    },
+    "CommerceCloudStandards.Search.FilteredQuery": {
+      "description": "A filtered query allows to filter the result of a possibly complex query using a possibly complex filter.",
+      "example": {
+        "query": {
+          "textQuery": {
+            "fields": [
+              "couponId"
+            ],
+            "searchPhrase": "disabled"
+          }
+        },
+        "filter": {
+          "termFilter": {
+            "field": "enabled",
+            "operator": "is",
+            "values": [
+              false
+            ]
+          }
+        }
+      },
+      "type": "object",
+      "properties": {
+        "filter": {
+          "description": "The possibly complex filter object.",
+          "type": "string"
+        },
+        "query": {
+          "description": "The query object.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "filter",
+        "query"
+      ]
+    },
+    "CommerceCloudStandards.Search.MatchAllQuery": {
+      "description": "A match all query simply matches all documents (namespace and document type). This query comes in handy if you just want to filter a search result or really do not have any constraints.",
+      "type": "object"
+    },
+    "CommerceCloudStandards.Search.NestedQuery": {
+      "description": "Nested query allows to query upon nested documents that are part of a larger document. The classical example is a product master with variants, in one big document, where you want to constraint a search to masters that have variants that match multiple constraints. \n\nThis Query is only applicable a subset of APIs. Consult your API documentation to see if NestedQuery is supported.\n",
+      "example": {
+        "path": "order.shippingAddresses",
+        "query": {
+          "boolQuery": {
+            "must": [
+              {
+                "boolQuery": {
+                  "must": [
+                    {
+                      "termQuery": {
+                        "fields": [
+                          "order.shippingAddresses.firstName"
+                        ],
+                        "operator": "is",
+                        "values": [
+                          "John"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "boolQuery": {
+                  "must": [
+                    {
+                      "termQuery": {
+                        "fields": [
+                          "order.shippingAddresses.lastName"
+                        ],
+                        "operator": "is",
+                        "values": [
+                          "Doe"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "scoreMode": "avg"
+      },
+      "type": "object",
+      "properties": {
+        "path": {
+          "description": "The path to the nested document.",
+          "type": "string"
+        },
+        "query": {
+          "description": "The query to run on the nested document.",
+          "type": "string"
+        },
+        "scoreMode": {
+          "description": "Indicates how scores for matching child objects affect the root parent document’s relevance score.",
+          "enum": [
+            "avg",
+            "total",
+            "max",
+            "none"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "query"
+      ]
+    },
+    "CommerceCloudStandards.Search.Query": {
+      "minProperties": 1,
+      "maxProperties": 1,
+      "description": "A set of objects that define criteria used to select records. A query can contain one of the following:\n* MatchAllQuery\n - Matches all documents.\n* TermQuery\n - Matches one or more documents against one or more document fields.\n* TextQuery\n - Matches text against one or more fields.\n* BoolQuery\n - Allows construction of a logical expression of multiple queries.\n* FilteredQuery\n - Allows a filter to be applied to a query.\n* NestedQuery \n - Allows to query upon nested documents that are part of a larger document.\n - _Only valid for a subset of APIs. See API documentation to determine if this is supported._",
+      "example": {
+        "filteredQuery": {
+          "query": {
+            "textQuery": {
+              "fields": [
+                "couponId"
+              ],
+              "searchPhrase": "disabled"
+            }
+          },
+          "filter": {
+            "termFilter": {
+              "field": "enabled",
+              "operator": "is",
+              "values": [
+                false
+              ]
+            }
+          }
+        }
+      },
+      "type": "object",
+      "properties": {
+        "boolQuery": {
+          "$ref": "#/definitions/CommerceCloudStandards.Search.BoolQuery"
+        },
+        "filteredQuery": {
+          "$ref": "#/definitions/CommerceCloudStandards.Search.FilteredQuery"
+        },
+        "matchAllQuery": {
+          "$ref": "#/definitions/CommerceCloudStandards.Search.MatchAllQuery"
+        },
+        "nestedQuery": {
+          "$ref": "#/definitions/CommerceCloudStandards.Search.NestedQuery"
+        },
+        "termQuery": {
+          "$ref": "#/definitions/CommerceCloudStandards.Search.TermQuery"
+        },
+        "textQuery": {
+          "$ref": "#/definitions/CommerceCloudStandards.Search.TextQuery"
+        }
+      }
+    },
+    "CommerceCloudStandards.Search.QueryFilter": {
+      "description": "Wraps any query and allows it to be used as a filter.",
+      "example": {
+        "query": {
+          "termQuery": {
+            "fields": [
+              "enabled",
+              "active"
+            ],
+            "operator": "is",
+            "values": [
+              false
+            ]
+          }
+        }
+      },
+      "type": "object",
+      "properties": {
+        "query": {
+          "description": "The query to use as a filter.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    },
+    "CommerceCloudStandards.Search.Range2Filter": {
+      "description": "Allows you to restrict a search result to hits where a range defined by specified attributes has a certain relationship to a specified range.\n\nThe first range (R1) is defined by a pair of attributes (\"fromField\" and \"toField\") that specify the extent of a range, such as attributes \"validFrom\" and \"validTo\".\n\nThe second range (R2) is defined by \"fromValue\" and \"toValue\".\n\nThe filter mode specifies the method used to compare the two ranges:\n\n* overlap: R1 overlaps fully or partially with R2.\n* containing: R1 contains R2.\n* contained: R1 is contained in R2.\n\nThe range filter supports several value types, and relies on the natural sorting of the value type for range interpretation. Value ranges can be open-ended, at one end only. You can configure whether the lower and upper bounds are inclusive or exclusive.\n\nA range 2 filter is useful for general restrictions that can be shared between searches (like a static date range) because the filter result is cached in memory. Range filters are not appropriate if the range is expected to be different for every query (for example, if the user controls the date range down to the hour via a UI control). Range filters are inclusive by default.",
+      "example": {
+        "fromField": "validFrom",
+        "toField": "validTo",
+        "filterMode": "overlap",
+        "fromValue": "2007-01-01T00:00:00.000Z",
+        "toValue": "2017-01-01T00:00:00.000Z"
+      },
+      "type": "object",
+      "properties": {
+        "filterMode": {
+          "default": "overlap",
+          "description": "Compare mode: overlap, containing, or contained.",
+          "enum": [
+            "overlap",
+            "containing",
+            "contained"
+          ],
+          "type": "string"
+        },
+        "fromField": {
+          "description": "The field name of the field that starts the first range.",
+          "type": "string"
+        },
+        "fromInclusive": {
+          "default": true,
+          "description": "A flag indicating if the lower bound of the second range is inclusive. Set to false to make the lower bound exclusive.",
+          "type": "boolean"
+        },
+        "fromValue": {
+          "description": "The lower bound of the second range. If not specified, the range is open-ended with respect to the lower bound. You can't leave both the lower and upper bounds open-ended.",
+          "type": "string"
+        },
+        "toField": {
+          "description": "The field name of the field that ends the first range.",
+          "type": "string"
+        },
+        "toInclusive": {
+          "default": true,
+          "description": "A flag indicating if the upper bound of the second range is inclusive. Set to false to make the lower bound exclusive.",
+          "type": "boolean"
+        },
+        "toValue": {
+          "description": "The upper bound of the second range. If not specified, the range is open-ended with respect to the upper bound. You can't leave both the upper and lower bounds open-ended.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fromField",
+        "toField"
+      ]
+    },
+    "CommerceCloudStandards.Search.RangeFilter": {
+      "description": "Allows you to restrict a search result to hits that have values for a given attribute that fall into a given value range. The range filter supports several value types, and relies on the natural sorting of the value type for range interpretation. Value ranges can be open-ended, at one end only. You can configure whether the lower and upper bounds are inclusive or exclusive.\n\nA range filter is useful for general restrictions that can be shared between searches (like a static date range) because the filter result is cached in memory. Range filters are not appropriate if the range is expected to be different for every query (for example, if the user controls the date range down to the hour via a UI control). Range filters are inclusive by default.",
+      "example": {
+        "field": "redemptionCount",
+        "from": 0,
+        "to": 10,
+        "fromInclusive": false
+      },
+      "type": "object",
+      "properties": {
+        "field": {
+          "description": "The search field.",
+          "type": "string"
+        },
+        "from": {
+          "description": "The lower bound of the filter range. If not specified, the range is open-ended with respect to the lower bound. You can't leave both the lower and upper bounds open-ended.",
+          "type": "string"
+        },
+        "fromInclusive": {
+          "default": true,
+          "description": "A flag indicating if the lower bound of the range is inclusive.  Set to false to make the lower bound exclusive.",
+          "type": "boolean"
+        },
+        "to": {
+          "description": "The upper bound of the filter range. If not specified, the range is open-ended with respect to the upper bound. You can't leave both the upper and lower bounds open-ended.",
+          "type": "string"
+        },
+        "toInclusive": {
+          "default": true,
+          "description": "A flag indicating if the upper bound of the range is inclusive.  Set to false to made the upper bound exclusive.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "field"
+      ]
+    },
+    "CommerceCloudStandards.Search.SearchRequestBase": {
+      "description": "Document representing a search request for retrieving items within the Data API. The query is a potentially complex set of expressions. The fields and expands that each query supports are defined within the search resource.",
+      "example": {
+        "limit": 4,
+        "query": {
+          "textQuery": {
+            "fields": [
+              "id",
+              "description"
+            ],
+            "searchPhrase": "campaign"
+          }
+        },
+        "offset": 2
+      },
+      "type": "object",
+      "properties": {
+        "limit": {
+          "description": "Maximum records to retrieve per request, not to exceed 200.",
+          "$ref": "#/definitions/CommerceCloudStandards.Pagination.Limit"
+        },
+        "query": {
+          "description": "The search query. See the description of the search endpoint for a list of queryable attributes.\n",
+          "type": "string"
+        },
+        "sorts": {
+          "description": "The list of sort clauses configured for the search request. Sort clauses are optional. See the description of the search endpoint for details on the default sorting behavior that is used when explicit sorts are not passed.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CommerceCloudStandards.Search.Sort"
+          }
+        },
+        "offset": {
+          "$ref": "#/definitions/CommerceCloudStandards.Pagination.Offset"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    },
+    "CommerceCloudStandards.Search.PaginatedSearchResultBase": {
+      "description": "Document representing a generic search result. Each search resource should extend this to define what is returned in the `hits`.",
+      "example": {
+        "limit": 1,
+        "hits": [
+          {
+            "couponId": "MyCoupon",
+            "creationDate": "2019-10-20T12:00:00Z",
+            "description": "This coupon is used to give 10% off stuff.",
+            "enabled": false,
+            "exportedCodeCount": 0,
+            "lastModified": "2019-10-30T04:23:59Z",
+            "redemptionCount": 3,
+            "redemptionLimits": {
+              "limitPerCode": 1,
+              "limitPerCustomer": 1,
+              "limitPerTimeFrame": {
+                "limit": 2,
+                "redemptionTimeFrame": 24
+              }
+            },
+            "singleCode": "MyCode",
+            "systemCodesConfig": {
+              "codePrefix": "SG",
+              "numberOfCodes": 500000
+            },
+            "totalCodesCount": 50,
+            "type": "single_code"
+          }
+        ],
+        "query": {
+          "textQuery": {
+            "fields": [
+              "id",
+              "description"
+            ],
+            "searchPhrase": "stuff"
+          }
+        },
+        "sorts": [
+          {
+            "field": "couponId",
+            "sortOrder": "desc"
+          }
+        ],
+        "offset": 2,
+        "total": 8
+      },
+      "$ref": "#/definitions/CommerceCloudStandards.Search.SimpleSearchResultBase"
+    },
+    "CommerceCloudStandards.Search.SimpleSearchResultBase": {
+      "description": "Document representing a generic search result. Each search resource should extend this to define what is returned in the `hits`.",
+      "example": {
+        "limit": 1,
+        "hits": [
+          {
+            "couponId": "MyCoupon",
+            "creationDate": "2019-10-20T12:00:00Z",
+            "description": "This coupon is used to give 10% off stuff.",
+            "enabled": false,
+            "exportedCodeCount": 0,
+            "lastModified": "2019-10-30T04:23:59Z",
+            "redemptionCount": 3,
+            "redemptionLimits": {
+              "limitPerCode": 1,
+              "limitPerCustomer": 1,
+              "limitPerTimeFrame": {
+                "limit": 2,
+                "redemptionTimeFrame": 24
+              }
+            },
+            "singleCode": "MyCode",
+            "systemCodesConfig": {
+              "codePrefix": "SG",
+              "numberOfCodes": 500000
+            },
+            "totalCodesCount": 50,
+            "type": "single_code"
+          }
+        ],
+        "offset": 2,
+        "total": 8
+      },
+      "type": "object",
+      "properties": {
+        "limit": {
+          "description": "Maximum records to retrieve per request, not to exceed 200.",
+          "$ref": "#/definitions/CommerceCloudStandards.Pagination.Limit"
+        },
+        "hits": {
+          "description": "The sorted array of search hits. Can be empty.",
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "offset": {
+          "$ref": "#/definitions/CommerceCloudStandards.Pagination.Offset"
+        },
+        "total": {
+          "$ref": "#/definitions/CommerceCloudStandards.Pagination.Total"
+        }
+      },
+      "required": [
+        "limit",
+        "offset",
+        "total"
+      ]
+    },
+    "CommerceCloudStandards.Search.Sort": {
+      "description": "Document representing a sort request. Each API has a different default sort configured that can be modified in the request.",
+      "example": {
+        "field": "couponId",
+        "sortOrder": "desc"
+      },
+      "type": "object",
+      "properties": {
+        "field": {
+          "description": "The name of the field to sort on.",
+          "type": "string"
+        },
+        "sortOrder": {
+          "default": "asc",
+          "description": "The sort order to be applied when sorting. When omitted, the default sort order (asc) is used.",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "field"
+      ]
+    },
+    "CommerceCloudStandards.Search.TermFilter": {
+      "description": "Allows you to restrict a search result to hits that match exactly one of the values configured for the filter. A term filter is useful for general restrictions that can be shared between searches. Use term filters whenever the criteria you filter on is a shared property of multiple searches (for example, like filtering by an order status). Use term filters for fields that have a discrete and small set of values only.",
+      "example": {
+        "field": "id",
+        "operator": "is",
+        "values": [
+          "myId"
+        ]
+      },
+      "type": "object",
+      "properties": {
+        "field": {
+          "description": "The filter field.",
+          "type": "string"
+        },
+        "operator": {
+          "description": "The operator to compare the field's values with the given ones.",
+          "enum": [
+            "is",
+            "one_of",
+            "is_null",
+            "is_not_null",
+            "less",
+            "greater",
+            "not_in",
+            "neq"
+          ],
+          "type": "string"
+        },
+        "values": {
+          "description": "The filter values.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "field",
+        "operator"
+      ]
+    },
+    "CommerceCloudStandards.Search.TermQuery": {
+      "description": "A term query matches one or more values against one or more document fields. A document is considered a hit if one of the values matches exactly with at least one of the given fields.  The operator \"is\" can only take one value, while \"one_of\" can take multiple. If multiple fields are specified, they are combined using the OR operator.\n\n**Limitations:**\n\n* The `greater` and `less` operators are not supported under certain conditions. They are permitted unless the API documentation states that they are not supported.\n* A subset of APIs have special handling when used with multiple fields. If used with multiple fields, the query is internally handled as a boolean OR of DisjointMaxQueries (with the dismax matching a value against all fields). The dismax makes sure that a document carrying a single term in multiple fields does not get higher scores than a document matching multiple terms in multiple fields. See your API documetation to see if that API has this behavior.",
+      "example": {
+        "fields": [
+          "enabled"
+        ],
+        "operator": "is",
+        "values": [
+          false
+        ]
+      },
+      "type": "object",
+      "properties": {
+        "fields": {
+          "minItems": 1,
+          "description": "The document fields, the values are matched against, combined with the operator.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "operator": {
+          "description": "Returns the operator to use for the term query.",
+          "enum": [
+            "is",
+            "one_of",
+            "is_null",
+            "is_not_null",
+            "less",
+            "greater",
+            "not_in",
+            "neq"
+          ],
+          "type": "string"
+        },
+        "values": {
+          "description": "The values, the fields are compared against, combined with the operator.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "fields",
+        "operator"
+      ]
+    },
+    "CommerceCloudStandards.Search.TextQuery": {
+      "description": "A text query is used to match some text (for example, a search phrase possibly consisting of multiple terms) against one or multiple fields. When multiple fields are provided, the phrase conceptually forms a logical OR over the fields. In this case, the terms of the phrase basically have to match within the text, that would result in concatenating all given fields.",
+      "example": {
+        "fields": [
+          "couponId"
+        ],
+        "searchPhrase": "limit"
+      },
+      "type": "object",
+      "properties": {
+        "fields": {
+          "minItems": 1,
+          "description": "The document fields the search phrase has to match against.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "searchPhrase": {
+          "description": "A search phrase, which can consist of multiple terms separated by spaces.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fields",
+        "searchPhrase"
+      ]
+    },
+    "CommerceCloudStandards.SiteId": {
+      "minLength": 1,
+      "description": "The identifer of the site that a request is being made in the context of. Attributes might have site specific values, and some objects may only be assigned to specific sites",
+      "example": "SiteGenesis",
+      "type": "string"
+    },
+    "CommerceCloudStandards.SearchRequest": {
+      "$ref": "#/definitions/CommerceCloudStandards.Search.SearchRequestBase"
+    },
+    "CommerceCloudStandards.PaginatedSearchResult": {
+      "$ref": "#/definitions/CommerceCloudStandards.Search.PaginatedSearchResultBase"
+    },
+    "CommerceCloudStandards.SimpleSearchResult": {
+      "$ref": "#/definitions/CommerceCloudStandards.Search.SimpleSearchResultBase"
+    },
+    "CommerceCloudStandards.CurrencyCode": {
+      "$ref": "#/definitions/CommerceCloudStandards.ISO.Currency"
+    },
+    "CommerceCloudStandards.Money": {
+      "$ref": "#/definitions/CommerceCloudStandards.ISO.MoneyMnemonic"
+    },
+    "CommerceCloudStandards.LanguageCode": {
+      "$ref": "#/definitions/CommerceCloudStandards.ISO.Language"
+    },
+    "CommerceCloudStandards.CountryCode": {
+      "$ref": "#/definitions/CommerceCloudStandards.ISO.Country"
+    },
+    "CommerceCloudStandards.LocaleCode": {
+      "$ref": "#/definitions/CommerceCloudStandards.ISO.Locale"
+    },
+    "CommerceCloudStandards.LocalizedString": {
+      "$ref": "#/definitions/CommerceCloudStandards.ISO.L10nString"
+    },
+    "CommerceCloudStandards.PropertyDefinition": {
+      "$ref": "#/definitions/CommerceCloudStandards.AttributeDefinitions.AttributeDefinition"
+    },
+    "CommerceCloudStandards.ClosedObject": {
+      "$ref": "#/definitions/CommerceCloudStandards.AdditionalProperties.NoPropertiesAllowed"
+    },
+    "CommerceCloudStandards.OpenObject": {
+      "$ref": "#/definitions/CommerceCloudStandards.AdditionalProperties.SpecifiedPropertiesAllowed"
+    }
+  },
+  "parameters": {
+    "trait:ApiStandards.DateConditionalRequest:If-Modified-Since": {
+      "description": "The server will return the requested resource only if it has been last modified after the given date",
+      "type": "string",
+      "in": "header",
+      "name": "If-Modified-Since"
+    },
+    "trait:ApiStandards.EtagConditionalRequest:If-None-Match": {
+      "description": "ETag that is required in the cache",
+      "type": "string",
+      "in": "header",
+      "name": "If-None-Match"
+    },
+    "trait:ApiStandards.OffsetPaginated:offset": {
+      "in": "query",
+      "name": "offset",
+      "type": "string"
+    },
+    "trait:CommerceCloudStandards.QueryParamsLimit:limit": {
+      "in": "query",
+      "name": "limit",
+      "type": "string"
+    },
+    "trait:CommerceCloudStandards.QueryParamsOffset:offset": {
+      "in": "query",
+      "name": "offset",
+      "type": "string"
+    },
+    "trait:CommerceCloudStandards.SiteSpecific:siteId": {
+      "in": "query",
+      "name": "siteId",
+      "required": true,
+      "type": "string"
+    }
+  },
+  "responses": {
+    "trait:Unauthorized:401": {
+      "description": "Unauthorized.",
+      "examples": {
+        "application/problem+json": {
+          "title": "Invalid Access Token",
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/invalid-access-token",
+          "detail": "The request is unauthorized, the access token is invalid.",
+          "accessToken": "hbGciOiJIUzI1NiIsInR5cCI6Ikp"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ApiStandards.ErrorResponse"
+      }
+    },
+    "trait:ApiStandards.RateLimited:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:ApiStandards.RateLimited2:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:ApiStandards.RateLimited3:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:ApiStandards.RateLimited4:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:ApiStandards.RateLimited5:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:ApiStandards.DateConditionalRequest:304": {
+      "description": "The resource has not been modified since the requested conditional date"
+    },
+    "trait:ApiStandards.OffsetPaginated:200": {
+      "description": "",
+      "headers": {
+        "SFDC-Pagination-Offset": {
+          "description": "The starting offset returned.",
+          "type": "string"
+        },
+        "SFDC-Pagination-Limit": {
+          "description": "The limit requested.",
+          "default": "<<defaultSize>>",
+          "type": "string"
+        },
+        "SFDC-Pagination-Total-Count": {
+          "type": "string"
+        },
+        "SFDC-Pagination-Result-Count": {
+          "format": "int64",
+          "description": "The number of results included in the response.",
+          "type": "number"
+        }
+      }
+    }
+  },
+  "paths": {}
+}

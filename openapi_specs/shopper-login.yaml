@@ -1,0 +1,3482 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Shopper Login",
+    "description": "The Shopper Login and API Access Service (SLAS) enables secure access to Commerce Cloud’s Shopper APIs for a wide range of headless commerce applications.\n\n**Important:** Before using this API, see [Authorization for Shopper APIs](https://developer.salesforce.com/docs/commerce/commerce-api/guide/authorization-for-shopper-apis.html) in the Get Started guides and the more detailed [SLAS guides](https://developer.salesforce.com/docs/commerce/commerce-api/guide/slas.html).",
+    "version": "v1"
+  },
+  "x-basePath": "{shortCode}.api.commercecloud.salesforce.com/shopper/auth/{version}",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "definitions": {
+    "ResponseType": {
+      "description": "Response Type",
+      "enum": [
+        "code"
+      ],
+      "type": "string"
+    },
+    "GrantType": {
+      "description": "Grant Type",
+      "enum": [
+        "authorization_code",
+        "refresh_token",
+        "client_credentials",
+        "authorization_code_pkce",
+        "session_bridge"
+      ],
+      "type": "string"
+    },
+    "TokenType": {
+      "description": "Token Type",
+      "enum": [
+        "Bearer"
+      ],
+      "type": "string"
+    },
+    "TokenTypeHint": {
+      "description": "Token Type Hint",
+      "enum": [
+        "access_token",
+        "refresh_token"
+      ],
+      "type": "string"
+    },
+    "ThirdPartyIdps": {
+      "description": "Third party IDPs that work with SLAS.",
+      "enum": [
+        "apple",
+        "auth0",
+        "azure",
+        "azure_adb2c",
+        "adfs",
+        "cognito",
+        "facebook",
+        "forgerock",
+        "gigya",
+        "google",
+        "okta",
+        "ping",
+        "salesforce"
+      ],
+      "type": "string"
+    },
+    "PasswordActionModes": {
+      "description": "Password Action delivery modes",
+      "enum": [
+        "callback",
+        "sms"
+      ],
+      "type": "string"
+    },
+    "TrustedOnBehalf": {
+      "description": "Type of system used for Trusted System On Behalf of requests (external or interal).",
+      "enum": [
+        "ts_ext_on_behalf_of",
+        "ts_int_on_behalf_of"
+      ],
+      "type": "string"
+    },
+    "TokenRequest": {
+      "type": "object",
+      "properties": {
+        "refresh_token": {
+          "maxLength": 256,
+          "description": "The long-term token used to refresh the short term access token. Required only with a grant type of `refresh_token`.",
+          "type": "string"
+        },
+        "code": {
+          "maxLength": 256,
+          "description": "Authorization code from the OAuth 2.1 service received in the front channel that is used to get access tokens and refresh tokens. Required with a grant type of `authorization_code` and `session_bridge`.",
+          "example": "M0t1K0pyoFKhBpUZnuUYO07xf8iYyMJrAc7h31h_ra8.gglPClJHsofqdTm_yPe5n6m2yCXzFmD8qICwIEjQGVA",
+          "type": "string"
+        },
+        "usid": {
+          "description": "The shopper's unique identifier, if known. If not provided, a new USID is generated.",
+          "example": "54ad2c5a-91f0-44ab-817c-73d6b86872d9",
+          "type": "string"
+        },
+        "grant_type": {
+          "description": "OAuth 2.1 grant type",
+          "example": "authorization_code",
+          "$ref": "#/definitions/GrantType"
+        },
+        "redirect_uri": {
+          "maxLength": 256,
+          "description": "The redirect URI that was used when getting the authorization code. A variety of URI formats and wildcards for host are supported, but app links like `airbnb://` or `fb://` are not. \n\nExamples of supported URIs:\n  - `http://localhost:3000/callback`\n  - `https://example.com/callback`\n  - `com.example.app:redirect_uri_path`\n  - ` *.subdomain.topleveldomain.com`\n",
+          "example": "http://localhost:3000/callback",
+          "type": "string"
+        },
+        "code_verifier": {
+          "maxLength": 128,
+          "description": "PKCE code verifier. Created by the client calling the `login` endpoint.\n\nThe `code_verifier` should be a high entropy cryptographically random string with a minimum of 43 characters and a maximum of 128 characters.\n\nThe `code_verifier` is optional when using a private client id for the token request.",
+          "type": "string"
+        },
+        "client_id": {
+          "maxLength": 40,
+          "description": "The SLAS client ID. Required when the grant type is `authorization_code_pkce`.",
+          "example": "z99ec276-cg53-4g94-cf72-76f300c6778zc",
+          "type": "string"
+        },
+        "channel_id": {
+          "maxLength": 100,
+          "description": "The channel (ECOM site) that the user is associated with.",
+          "example": "RefArch",
+          "type": "string"
+        }
+      },
+      "required": [
+        "grant_type"
+      ]
+    },
+    "TokenResponse": {
+      "type": "object",
+      "properties": {
+        "access_token": {
+          "description": "Short term shopper JWT that can be used to access Shopper APIs. Valid for 30 minutes.\n\nA trusted agent shopper JWT is valid for 15 min.",
+          "example": "eyJ2ZXIiOiIxLjAiLCJraWQiOiJTTEFTIiwidHlwIjoiand0IiwiY2x2IjoiSjIuMS4wIiwiYWxnIjoiRVMyNTYifQ.eyJhdWQiOiJjb3JlL2Rldi9idGluZ2V5bHRtMiIsImF1dCI6IkdVSUQiLCJzdWIiOiJ1c2lkOjo1NGFkMmM1YS05MWYwLTQ0YWItODE3Yy03M2Q2Yjg2ODcyZDk6OnVwbjpndWVzdCIsIm5iZiI6MTU4Mjg0NTYyNCwiY3R4Ijoic2ZkYy5jb21tZXJjZWNsb3VkIiwiaXNzIjoiY29yZS9kZXYvYnRpbmdleWx0bTIiLCJzdHkiOiJVc2VyIiwiaXN0IjoxLCJleHAiOjE1ODI4NDU3NDQsImlhdCI6MTU4Mjg0NTY1NCwianRpIjoiQzJDOTA0ODg2NDA3MDkwNDg4NjQwNzMyMjExNzQ1ODEyMTQzIn0.2a6lMBSY17PrhDO8pvEk7PCXW_nkguMHi4J-Tuirkz-ETB6rnKyuRjF5yD6B55tMvm8dO8ulAHyDYqjObMxLJg",
+          "type": "string"
+        },
+        "id_token": {
+          "description": "User ID token. Valid for 30 minutes.",
+          "example": "eyJraWQiOiI3NGU2YjMxZS1lYTczLTQ3OTYtOWRkYi1jMDJmZGI4ZDgwYmUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2lkOmQ1MDBhMzY5LTc1MWQtNDkzYy1iNDAzLThmOThmYjg3MTdiNiIsImF1ZCI6IjU1M2FjOGFjLTRkYjktNGVkMy04MjVjLTNhZTNiZjVkMzI3YiIsImlzcyI6ImRldi51cy5zaG9wcGVyLmNjLnNhbGVzZm9yY2UuY29tIiwibmFtZSI6ImJsYWlyLnNsYXMudGVzdEBnbWFpbC5jb20iLCJleHAiOjE1OTExMTE0MzgsImlhdCI6MTU5MTEwOTYzOCwiZW1haWwiOiJibGFpci5zbGFzLnRlc3RAZ21haWwuY29tIn0.KgpAcq-G9Lz7IGnjkJlaFLFXYncVCwcVrRIuy3bEfgzRozqaDRvAori4oOz4RtgYjmoc5x2euoisHL0mVnHgPKOdYBty1wTJqneJEQt6hP4Kp0KFciID_ILCi-DE8VWS5t0NknnMP_iKhIkqcRL48iwPFUWkWA6AEWxE_yvJLNRLithsSxsx7EfBfpD8Hr2b5tMEwImQNmJNYGRTI4LSmcYspBORvJoAnfGpMC0kglxl40bhf5j4ItX4_DiWQC4zaGYD-HJV4BDr6C7iGCs5ZVPypF0yQD3iBio26fwj9Ys5WF9XMtPtqET2kqsz6fDC5GkE6HTUHH_r87jxbDq-8w",
+          "type": "string"
+        },
+        "refresh_token": {
+          "description": "Long term refresh token that can be used to refresh an access token. Valid for 30 days.",
+          "example": "EgMYpjfFKdlSy-a3PYeyihmP95IpIp3FaDpPmVH1yu8.lahomBi7zJbRa6yKAuAAiKu3lprTPsEueKwqcBvhRLU",
+          "type": "string"
+        },
+        "expires_in": {
+          "description": "Remaining access token expiry time, in seconds.",
+          "example": 900,
+          "type": "integer"
+        },
+        "refresh_token_expires_in": {
+          "description": "Remaining refresh token expiry time, in seconds.",
+          "example": 2592000,
+          "type": "number"
+        },
+        "token_type": {
+          "description": "Token Type",
+          "$ref": "#/definitions/TokenType"
+        },
+        "usid": {
+          "description": "The unique shopper ID. Returned when using the `client_credentials` grant type.",
+          "example": "18cda486-fe32-4e27-888b-6e4f89938e67",
+          "type": "string"
+        },
+        "customer_id": {
+          "description": "Customer's ID",
+          "example": "1000005",
+          "type": "string"
+        },
+        "enc_user_id": {
+          "description": "MD5 Hashed ECOM user ID in uppercase.",
+          "example": "45D39A8499A95288F82855427EBA99B5",
+          "type": "string"
+        },
+        "idp_access_token": {
+          "maxLength": 8192,
+          "description": "This is the access token that is returned from the IDP. The IDP access token is returned to be able to make calls into the IDP outside of SLAS.",
+          "example": "eyJraWQiOiJYS21HbHVuSm0zSlBTMHNjQXZXV19XQlYtRi1wMkxLSDR0V05UMHVVSjVJIiwiYWxnIjoiUlMyNTYifQ.eyJ2ZXIiOjEsImp0aSI6IkFULjFMY0xxTWhqM2t0N1FKeFhxQ0VtdGZOOVV2eUcweW1meDFxZG9BdzF1NWMub2FyeXhveHF0QUtxaVFMbkM1ZDYiLCJpc3MiOiJodHRwczovL2Rldi05NTY1MjM2Lm9rdGEuY29tIiwiYXVkIjoiaHR0cHM6Ly9kZXYtOTU2NTIzNi5va3RhLmNvbSIsInN1YiI6Im9rdGEuc2xhcy50ZXN0IiwiaWF0IjoxNjc5Njk4MzA4LCJleHAiOjE2Nzk3MDE5MDgsImNpZCI6IjBvYTJrNXNma0JXZ0poTEVHNWQ2IiwidWlkIjoiMDB1MzhxZGpuU2NMT0IxbXE1ZDYiLCJzY3AiOlsib2ZmbGluZV9hY2Nlc3MiLCJvcGVuaWQiLCJlbWFpbCIsInByb2ZpbGUiXSwiYXV0aF90aW1lIjoxNjc5Njk4MzA2fQ.FDbGsnZGwTYVKGSlAo6jqcjG2HQ_BqQKRk72M5h69DRHyOM4wngsEELN_Wtgj3E77sP7IOmIKjiK5SFP17ADMbKZptVr2pqaMVF3PuU3Cbl_MgXZValfT-z12jHRq9sHMfsdTjY2RnvG44ZDFKc2no8mdL6IJ1MfCaZT5Tql5Ktq_UgudaWFsYqad3ETcmp5Y8ivz1bFnqud0sO9D9JzYOtfd9h71JKcsSC2rXc_Si-INPKKaGl8CDgaLXxu_Am9twJpUenHLpy0BerhcVvdFz7_611E53xOT_Esrc1pe-XAZtlYsJFnhxTBDT342ukiSWk2m6juVappv1GsRfUf2g",
+          "type": "string"
+        }
+      },
+      "required": [
+        "access_token",
+        "id_token",
+        "refresh_token",
+        "expires_in",
+        "refresh_token_expires_in",
+        "token_type",
+        "usid",
+        "customer_id",
+        "enc_user_id",
+        "idp_access_token"
+      ]
+    },
+    "TokenActionRequest": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "description": "Token to inspect or revoke.",
+          "example": "EgMYpjfFKdlSy-a3PYeyihmP95IpIp3FaDpPmVH1yu8.lahomBi7zJbRa6yKAuAAiKu3lprTPsEueKwqcBvhRLU",
+          "type": "string"
+        },
+        "token_type_hint": {
+          "description": "Token type hint. For inspecting, use `access_token` or `refresh_token`. For revoking, use `refresh_token`.",
+          "$ref": "#/definitions/TokenTypeHint"
+        }
+      },
+      "required": [
+        "token"
+      ]
+    },
+    "TrustedSystemTokenRequest": {
+      "description": "A request for an access token on behalf of a registered user whose credentials are stored using a third party system.",
+      "type": "object",
+      "properties": {
+        "usid": {
+          "description": "The shopper's unique identifier, if known. If not provided, a new USID is generated.",
+          "example": "54ad2c5a-91f0-44ab-817c-73d6b86872d9",
+          "type": "string"
+        },
+        "grant_type": {
+          "description": "Grant Type. Must be set to `client_credentials` for trusted system requests.",
+          "example": "client_credentials",
+          "$ref": "#/definitions/GrantType"
+        },
+        "hint": {
+          "description": "The type of trusted system to use (external or internal).",
+          "example": "ts_ext_on_behalf_of",
+          "$ref": "#/definitions/TrustedOnBehalf"
+        },
+        "login_id": {
+          "maxLength": 128,
+          "description": "The ID used by the shopper for trusted system access. \n\nIf set to `guest`, a token is returned for a guest user.",
+          "example": "samantha.sampleson@example.com",
+          "type": "string"
+        },
+        "idp_origin": {
+          "maxLength": 16,
+          "description": "The external IDP that the user is associated with.",
+          "example": "google",
+          "$ref": "#/definitions/ThirdPartyIdps"
+        },
+        "client_id": {
+          "maxLength": 40,
+          "description": "The SLAS public client ID for use with internal trusted-system requests.",
+          "example": "6c388ebd-6843-4863-aef9-781382c9e8cd",
+          "type": "string"
+        },
+        "channel_id": {
+          "maxLength": 100,
+          "description": "The channel (ECOM site) that the user is associated with.",
+          "example": "RefArch",
+          "type": "string"
+        },
+        "email_id": {
+          "maxLength": 128,
+          "description": "The email address for the shopper that is used for trusted-system requests. If not provided, `login_id` is used instead.",
+          "example": "samantha.sampleson@example.com",
+          "type": "string"
+        }
+      },
+      "required": [
+        "grant_type",
+        "hint",
+        "login_id",
+        "idp_origin",
+        "client_id",
+        "channel_id"
+      ]
+    },
+    "TrustedAgentTokenRequest": {
+      "properties": {
+        "agent_id": {
+          "maxLength": 40,
+          "description": "The ID of the merchant. This is an optional parameter. If passed in, the `agent_id` will be validated using the SUB claim in the response from Account Manager.",
+          "example": "merchant@example.com",
+          "type": "string"
+        },
+        "client_id": {
+          "maxLength": 40,
+          "description": "The SLAS public client ID or SLAS private client ID for use with internal, trusted-system requests.\n\nThe `client_id` is not needed if a using a SLAS private `client_id` and the `_sfdc_client_auth` header.",
+          "example": "6c388ebd-6843-4863-aef9-781382c9e8cd",
+          "type": "string"
+        },
+        "channel_id": {
+          "maxLength": 100,
+          "description": "The channel (ECOM site) that the user is associated with.",
+          "example": "RefArch",
+          "type": "string"
+        },
+        "code_verifier": {
+          "description": "PKCE code verifier. Created by the caller.\n\nThe `code_challenge` is created by SHA256 hashing the `code_verifier` and Base64 encoding the resulting hash.\n\nThe `code_verifier` should be a high entropy cryptographically random string with a minimum of 43 characters and a maximum of 128 characters.\n\nThe `code_verifier` is not needed if a using a SLAS private `client_id` and the `_sfdc_client_auth` header.",
+          "example": "Ar0lAwU_jsuA~ZXX8-JnMbZFxrnDot2OtgLEi1kOT_FxD6Bo0EQDbbrvoym9xHvatNGnNzrObLJeK6e4U9m4pveRMbdwNGa4jwiAlKGvijVn0PW0hqb03_w1gQE00wTo",
+          "type": "string"
+        },
+        "grant_type": {
+          "description": "Grant Type. Must be set to `client_credentials` for trusted agent requests.",
+          "example": "client_credentials",
+          "$ref": "#/definitions/GrantType"
+        },
+        "login_id": {
+          "maxLength": 128,
+          "description": "The ID is the shopper for trusted agent access.",
+          "example": "jack.shopper@example.com",
+          "type": "string"
+        },
+        "idp_origin": {
+          "maxLength": 16,
+          "description": "The IDP that the user is associated with.",
+          "example": "ecom",
+          "type": "string"
+        }
+      },
+      "required": [
+        "client_id",
+        "channel_id",
+        "code_verifier",
+        "grant_type",
+        "login_id",
+        "idp_origin"
+      ],
+      "type": "object"
+    },
+    "SessionBridgeTokenRequest": {
+      "properties": {
+        "code": {
+          "maxLength": 256,
+          "description": "Authorization code returned from session bridge authorization received in the front channel that is used to get session bridge access tokens and refresh tokens. Required with a grant type of `session_bridge`.",
+          "example": "M0t1K0pyoFKhBpUZnuUYO07xf8iYyMJrAc7h31h_ra8.gglPClJHsofqdTm_yPe5n6m2yCXzFmD8qICwIEjQGVA",
+          "type": "string"
+        },
+        "client_id": {
+          "maxLength": 40,
+          "description": "The SLAS public client ID for use with PKCE requests. This is a required parameter when using a public client.",
+          "example": "6c388ebd-6843-4863-aef9-781382c9e8cd",
+          "type": "string"
+        },
+        "channel_id": {
+          "maxLength": 100,
+          "description": "The channel (ECOM site) that the user is associated with.",
+          "example": "RefArch",
+          "type": "string"
+        },
+        "code_verifier": {
+          "description": "PKCE code verifier. Created by the caller. This is a required parameter when using a public client.\n\nThe `code_challenge` is created by SHA256 hashing the `code_verifier` and Base64 encoding the resulting hash.\n\nThe `code_verifier` should be a high entropy cryptographically random string with a minimum of 43 characters and a maximum of 128 characters.",
+          "example": "Ar0lAwU_jsuA~ZXX8-JnMbZFxrnDot2OtgLEi1kOT_FxD6Bo0EQDbbrvoym9xHvatNGnNzrObLJeK6e4U9m4pveRMbdwNGa4jwiAlKGvijVn0PW0hqb03_w1gQE00wTo",
+          "type": "string"
+        },
+        "dwsid": {
+          "description": "Cookie passed back from the '/authorize' endpoint call for session bridge. This parameter is optional and not needed if using the `dwsgst` parameter.",
+          "example": "pATvWUO3KSdt-Kmcy-8-RsxKnoO4BMDwoec7ACVlW6tZNnhaOL7gt7mHqL-h7QYn5TyE61z0DeSMCqxngsWeHw==",
+          "type": "string"
+        },
+        "grant_type": {
+          "description": "Grant Type. Both `session_bridge` and `client_credentials` are supported.\n\nFor public client id requests the grant_type must be set to `session_bridge`.\n\nFor private client_id and secret the grant_type must be set to `client_credentials` along with a basic authorization header.",
+          "example": "session_bridge",
+          "$ref": "#/definitions/GrantType"
+        },
+        "login_id": {
+          "maxLength": 128,
+          "description": "The ID of the shopper for session bridge access.",
+          "example": "jack.shopper@example.com",
+          "type": "string"
+        },
+        "dwsgst": {
+          "description": "Signed guest Json Web Token (JWT) that was obtained from ECOM. This parameter is optional and not needed if using the `dwsid` parameter.",
+          "example": "eyJraWQiOiIxNjgxNTU5OTkxNzkwIiwiYWxnIjoiRVMyNTYifQ.eyJ0ZW5hbnRJZCI6IkJHVk5fUzA1IiwiZHdzaWQiOiJuWHRhckdNU2ZxbnBaSUNJUGFKTHJSWGZ6b2lWYXBBU3BBTFNfeFdUMV9QZjRBWDA0N1lMQ1dSUFByM1BiSEl4d2RaODFiVGZoM3M1Wlgza2NhOG0zZz09IiwiY3VzdG9tZXJJZCI6ImJjQXI5N2NuMm1ZdmhjMGhqTGsxYmFXSzRqIiwiaWF0IjoxNjg1MTI4NjM2LCJleHAiOjE2ODUxMjkyMzksImlzcyI6ImNvbW1lcmNlY2xvdWQvcHJvZHVjdGlvbi9iZ3ZuczA1IiwidmVycyI6IjEiLCJ0eXBlIjoiRyJ9.BGY4kyOXbQSzZxubE3BrSzhf8ByehGUfJa7_J2XRQ93xY4dAOhF_xbXcHmBaEUBUzSny-Cf0pATzEaSsKpTxkg",
+          "type": "string"
+        },
+        "usid": {
+          "description": "The unique shopper ID. Returned when from session bridge authorization.",
+          "example": "18cda486-fe32-4e27-888b-6e4f89938e67",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "client_id",
+        "channel_id",
+        "code_verifier",
+        "dwsid",
+        "grant_type",
+        "login_id"
+      ],
+      "type": "object"
+    },
+    "PasswordlessLoginRequest": {
+      "description": "A request for a passwordless login token. This is only available for resgistered users using ECOM.",
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "maxLength": 128,
+          "description": "User ID for logging in.",
+          "example": "samantha.sampleson@example.com",
+          "type": "string"
+        },
+        "mode": {
+          "description": "Notification mode for sending the passwordless token to the user. Using `callback` SLAS will make  POST request to the given callback_uri. Using `sms` requires Marketing Cloud to be configured for SLAS and have a `sms` password action template also configured.",
+          "example": "callback",
+          "$ref": "#/definitions/PasswordActionModes"
+        },
+        "locale": {
+          "description": "The locale of the template. Not needed for the `callback` mode",
+          "example": "en-us",
+          "type": "string"
+        },
+        "usid": {
+          "description": "The shopper's unique identifier, if known. If not provided, a new USID is generated.",
+          "example": "18cda486-fe32-4e27-888b-6e4f89938e67",
+          "type": "string"
+        },
+        "channel_id": {
+          "maxLength": 100,
+          "description": "The channel (ECOM site) that the user is associated with.",
+          "example": "RefArch",
+          "type": "string"
+        },
+        "callback_uri": {
+          "description": "The callback URI. Required when the mode is `callback`. The `callback_uri` property will be validated against the callback URIs that have been registered with the SLAS client. The callback URI _must_ be a `POST` endpoint because the token will be included in the body.\n\nWildcards are not allowed in the callback_uri because this is a security risk that can expose the token. This is not considered an OAuth2 callback_url.\n",
+          "example": "http://localhost:9050/passwordless/login/callback",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_id",
+        "mode",
+        "channel_id"
+      ]
+    },
+    "PasswordActionRequest": {
+      "description": "A request for a password reset token. This is only available for resgistered users using ECOM.",
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "maxLength": 128,
+          "description": "User ID for logging in. This is the id that is used to log into SFCC.",
+          "example": "samantha.sampleson@example.com",
+          "type": "string"
+        },
+        "mode": {
+          "description": "Notification mode for sending the passwordless token to the user. Using `callback` SLAS will make  POST request to the given callback_uri. Using `sms` requires Marketing Cloud to be configured for SLAS and have a `sms` password action template also configured.",
+          "example": "callback",
+          "$ref": "#/definitions/PasswordActionModes"
+        },
+        "channel_id": {
+          "description": "The channel (ECOM site) that the user is associated with.",
+          "example": "RefArch",
+          "type": "string"
+        },
+        "locale": {
+          "description": "The locale of the template.",
+          "example": "en-us",
+          "type": "string"
+        },
+        "client_id": {
+          "maxLength": 40,
+          "description": "The public client ID. Requires setting `grant_type` to `passwordless_login_pkce`",
+          "example": "6b200ebd-7843-4073-aef9-792482c9e1de",
+          "type": "string"
+        },
+        "code_challenge": {
+          "minLength": 43,
+          "maxLength": 128,
+          "description": "PKCE code challenge. Created by the client.\n\nThe `code_challenge` is created by SHA256 hashing the `code_verifier` and Base64 encoding the resulting hash.\n\nThe `code_verifier` should be a high entropy cryptographically random string with a minimum of 43 characters and a maximum of 128 characters. \n\n Requires setting `grant_type` to `passwordless_login_pkce`",
+          "example": "Nx_Vf0-0W6SpyRVBVTbl8VSu2OE4yD2fZNExW6N3V_Q",
+          "type": "string"
+        },
+        "callback_uri": {
+          "description": "The callback uri. Required when the mode is `callback`. The `callback_uri` property will be validated against the callback URIs that have been registered with the SLAS client. The callback URI _must_ be a `POST` endpoint because the token will be included in the body.\n\nWildcards are not allowed in the callback_uri because this is a security risk that can expose the token. This is not considered an OAuth2 callback_url.\n",
+          "example": "http://localhost:9050/password/reset/callback",
+          "type": "string"
+        },
+        "idp_name": {
+          "description": "The name of the 3rd party identity provider for the user ID",
+          "example": "okta",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_id",
+        "mode",
+        "channel_id"
+      ]
+    },
+    "PasswordActionVerifyRequest": {
+      "description": "A request for creating a new password using the password action token.",
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "maxLength": 40,
+          "description": "The public client ID.",
+          "example": "6b200ebd-7843-4073-aef9-792482c9e1de",
+          "type": "string"
+        },
+        "pwd_action_token": {
+          "description": "Password action token that was returned from the `/password/reset` endpoint.",
+          "example": "QJO3CA7QTPVCQ3OMROXF2MTDDED3EEC3",
+          "type": "string"
+        },
+        "code_verifier": {
+          "description": "PKCE code verifier. Created by the client.\n\nThe `code_challenge` is created by SHA256 hashing the `code_verifier` and Base64 encoding the resulting hash.\n\nThe `code_verifier` should be a high entropy cryptographically random string with a minimum of 43 characters and a maximum of 128 characters.",
+          "example": "Ar0lAwU_jsuA~ZXX8-JnMbZFxrnDot2OtgLEi1kOT_FxD6Bo0EQDbbrvoym9xHvatNGnNzrObLJeK6e4U9m4pveRMbdwNGa4jwiAlKGvijVn0PW0hqb03_w1gQE00wTo",
+          "type": "string"
+        },
+        "new_password": {
+          "description": "The new password to set for the shopper associated with the password action token.",
+          "example": "new_password",
+          "type": "string"
+        },
+        "channel_id": {
+          "maxLength": 100,
+          "description": "The channel that the request is for. For an ECOM request, this is angalous to the site ID.",
+          "example": "SiteGenesis",
+          "type": "string"
+        }
+      },
+      "required": [
+        "client_id",
+        "pwd_action_token",
+        "code_verifier",
+        "new_password",
+        "channel_id"
+      ]
+    },
+    "PasswordLessLoginTokenRequest": {
+      "description": "A request for an access token using a passwordless token.",
+      "type": "object",
+      "properties": {
+        "grant_type": {
+          "description": "OAuth 2.1 grant type. Must be set to `client_credentials` for passwordless login.",
+          "example": "client_credentials",
+          "$ref": "#/definitions/GrantType"
+        },
+        "hint": {
+          "description": "Passwordless hint. Use `pwdless_login`.",
+          "example": "pwdless_login",
+          "type": "string"
+        },
+        "pwdless_login_token": {
+          "description": "Passwordless login token that was created from the user ID.",
+          "example": "QJO3CA7QTPVCQ3OMROXF2MTDDED3EEC3",
+          "type": "string"
+        },
+        "client_id": {
+          "maxLength": 40,
+          "description": "The public client ID.",
+          "example": "6b200ebd-7843-4073-aef9-792482c9e1de",
+          "type": "string"
+        },
+        "code_verifier": {
+          "description": "PKCE code verifier. Created by the client.\n\nThe `code_challenge` is created by SHA256 hashing the `code_verifier` and Base64 encoding the resulting hash.\n\nThe `code_verifier` should be a high entropy cryptographically random string with a minimum of 43 characters and a maximum of 128 characters.",
+          "example": "Ar0lAwU_jsuA~ZXX8-JnMbZFxrnDot2OtgLEi1kOT_FxD6Bo0EQDbbrvoym9xHvatNGnNzrObLJeK6e4U9m4pveRMbdwNGa4jwiAlKGvijVn0PW0hqb03_w1gQE00wTo",
+          "type": "string"
+        }
+      },
+      "required": [
+        "grant_type",
+        "hint",
+        "pwdless_login_token"
+      ]
+    },
+    "IntrospectResponse": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "scope": {
+          "example": "offline_access openid",
+          "type": "string"
+        },
+        "client_id": {
+          "example": "553ac8ac-4db9-4ed3-825c-3ae3bf5d327b",
+          "type": "string"
+        },
+        "sub": {
+          "example": "usid:156c4e69-e89b-406b-a4b7-576980bb234e::upn:Guest",
+          "type": "string"
+        },
+        "exp": {
+          "example": 1594733276,
+          "type": "integer"
+        },
+        "username": {
+          "example": "samantha.sampleson@example.com",
+          "type": "string"
+        },
+        "token_type": {
+          "example": "refresh_token",
+          "type": "string"
+        }
+      },
+      "required": [
+        "active",
+        "scope",
+        "client_id",
+        "sub",
+        "exp",
+        "username",
+        "token_type"
+      ]
+    },
+    "Oauth2ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "example": "invalid_client",
+          "type": "string"
+        },
+        "error_uri": {
+          "example": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/oauth-service",
+          "type": "string"
+        },
+        "error_description": {
+          "example": "Missing access token or refresh token.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "error"
+      ]
+    },
+    "LoginRequest": {
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "maxLength": 40,
+          "description": "SLAS client ID. Required when the grant type is `authorization_code_pkce`.",
+          "example": "z99ec276-cg53-4g94-cf72-76f300c6778zc",
+          "type": "string"
+        },
+        "response_type": {
+          "description": "Must be `code`. Indicates that the client wants an authorization code (when the grant type is `authorization_code`).",
+          "$ref": "#/definitions/ResponseType"
+        },
+        "redirect_uri": {
+          "maxLength": 256,
+          "description": "The URI to which the server redirects the browser after the user grants the authorization. The URI must be registered with the SLAS client. A variety of URI formats and wildcards for host are supported, but app links like airbnb:// or fb:// are not. Examples of supported URIs: \n\nExamples of supported URIs:\n  - `http://localhost:3000/callback`\n  - `https://example.com/callback`\n  - `com.example.app:redirect_uri_path`\n  - ` *.subdomain.topleveldomain.com`\n",
+          "example": "http://localhost:3000/callback",
+          "type": "string"
+        },
+        "state": {
+          "maxLength": 512,
+          "description": "Value to be sent by the client to determine the state between the authorization request and the server response. Optional, but strongly recommended.",
+          "example": "client-state",
+          "type": "string"
+        },
+        "scope": {
+          "maxLength": 256,
+          "description": "Scopes to limit an application's access to a user's account.",
+          "example": "openid|offline_access|email",
+          "type": "string"
+        },
+        "usid": {
+          "description": "The unique shopper ID.",
+          "example": "18cda486-fe32-4e27-888b-6e4f89938e67",
+          "type": "string"
+        },
+        "channel_id": {
+          "maxLength": 100,
+          "description": "The channel that the request is for. For an ECOM request, this is angalous to the site ID.",
+          "example": "SiteGenesis",
+          "type": "string"
+        },
+        "code_challenge": {
+          "minLength": 43,
+          "maxLength": 128,
+          "description": "PKCE code verifier. Created by the client calling the `login` endpoint.\n\nThe `code_challenge` is created by SHA256 hashing the `code_verifier` and Base64 encoding the resulting hash.\n\nThe `code_verifier` should be a high entropy cryptographically random string with a minimum of 43 characters and a maximum of 128 characters.\n\nThe `code_challenge` is optional when using a private client id for the token request.",
+          "example": "krc5G3_5lRUcXDUzFZQ88oJA_-ZmlHWkyGsgOrSLEWg",
+          "type": "string"
+        }
+      },
+      "required": [
+        "redirect_uri",
+        "channel_id"
+      ]
+    }
+  },
+  "paths": {
+    "/organizations/{organizationId}/oauth2/login": {
+      "post": {
+        "description": "Logs in a shopper with credentials that are managed by a B2C Commerce instance (ECOM). It follows the authorization code grant flow as defined by the OAuth 2.1 standard. It also uses a proof key for code exchange (PKCE).\n\nFor PKCE values:\n- The `code_verifier` string is a random string used for the `/token` endpoint request.\n- The `code_challenge` is an encoded version of the `code_verifier` string using an SHA-256 hash.\n\n  The request must include a basic authorization header that contains a Base64 encoded version of the following string: `<shopperUserID>:<shopperPassword>`.\n\n  Required parameters: `code_challenge`, `channel_id`, `client_id`, and `redirect_uri`.\n\n  Optional parameters: `usid`.\n\n  The SLAS `/login` endpoint redirects back to the redirect URI and returns an authorization code.\n\n  Calls to `/login` made with the same loginId and tenantId within 1 second will result in a conflict.\n",
+        "operationId": "authenticateCustomer",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "303": {
+            "description": "Success. The authorization code is added to the `redirect_uri`.",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "schema": {
+              "example": {
+                "authorizationCode": "eyJ2ZXIiOiIxLjAiLCJraWQiOiJTTEFTIiwidHlwIjoiand0IiwiY2x2IjoiS",
+                "usid": "156c4e69-e89b-406b-a4b7-576980bb234e"
+              },
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing client_id."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Basic Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "examples": {
+              "application/problem+json": {
+                "error": "conflict",
+                "error_description": "The same loginId and tenantId tried to login twice within 1 second."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation that it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "required": true,
+            "description": "Base64-encoded username and password for HTTP Basic authentication.",
+            "type": "string",
+            "in": "header",
+            "name": "Authorization"
+          },
+          {
+            "in": "formData",
+            "name": "formData",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/passwordless/login": {
+      "post": {
+        "description": "Allows the customer to authenticate when their identity provider is down.",
+        "operationId": "authorizePasswordlessCustomer",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing access token."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "412": {
+            "description": "Precondition Failure",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "precondition_failure",
+                "error_description": "Depenant service is not available."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "description": "Base64-encoded string for HTTP Basic authentication. The string is composed of a client ID and client secret, separated by a colon (`:`), like this: `clientId:clientSecret`",
+            "type": "string",
+            "in": "header",
+            "name": "Authorization"
+          },
+          {
+            "in": "formData",
+            "name": "formData",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/logout": {
+      "get": {
+        "description": "Log out a shopper. The shopper's access token and refresh token are revoked. If the shopper authenticated with a B2C Commerce (ECOM) instance, the OCAPI JWT is also revoked. This should be called for Registered users that have logged in using SLAS. his should be called for registered users that have logged in using SLAS. This endpoint is not for use with guest users.\n\nRequired header: Authorization header bearer token of the Shopper access token to logout.\n\nRequired parameters: `refresh token`, `channel_id`, and `client`.",
+        "operationId": "logoutCustomer",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "examples": {
+              "application/json": {
+                "access_token": "",
+                "id_token": "null",
+                "refresh_token": "EnL9U2f3-WiVPwL60CFBI21UY_oxWAwX5JkgO-X12Vs",
+                "expires_in": 0,
+                "refresh_token_expires_in": 0,
+                "token_type": "Bearer",
+                "usid": "null",
+                "customer_id": "null",
+                "enc_user_id": "null",
+                "idp_access_token": ""
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/TokenResponse"
+            }
+          },
+          "303": {
+            "description": "The user has sent too many requests in a given amount of time, and rate limiting is in effect.",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing client_id."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Basic Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation that it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "required": true,
+            "maxLength": 40,
+            "description": "The SLAS client ID.",
+            "type": "string",
+            "in": "query",
+            "name": "client_id"
+          },
+          {
+            "required": true,
+            "description": "Refresh token that was given during the access token request.",
+            "type": "string",
+            "in": "query",
+            "name": "refresh_token"
+          },
+          {
+            "maxLength": 100,
+            "description": "The `channel_id` parameter must be provided if the shopper authenticated using the `login` endpoint with ECOM.",
+            "type": "string",
+            "in": "query",
+            "name": "channel_id"
+          },
+          {
+            "maxLength": 12,
+            "description": "Optional parameter for logging out user sessions. Use `all-sessions` to log out all user sessions. If `hint` is not used, only the current user session will be logged out.",
+            "type": "string",
+            "in": "query",
+            "name": "hint"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/authorize": {
+      "get": {
+        "description": "Get an authorization code after authenticating a user against an identity provider (IDP). This is the first step of the OAuth 2.1 authorization code flow, where a user can log in via federation to the IDP configured for the client. After successfully logging in, the user gets an authorization code via a redirect URI.\n\nThis endpoint can be called from the front channel (the browser).",
+        "operationId": "authorizeCustomer",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "303": {
+            "description": "Success. The authorization code is added to the `redirect_uri`.",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "schema": {
+              "example": {
+                "authorizationCode": "eyJ2ZXIiOiIxLjAiLCJraWQiOiJTTEFTIiwidHlwIjoiand0IiwiY2x2IjoiS",
+                "usid": "156c4e69-e89b-406b-a4b7-576980bb234e"
+              },
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing client_id."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Basic Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation that it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "required": true,
+            "maxLength": 256,
+            "description": "The URL to which the server redirects the browser after the user grants the authorization. The URI must be pre-registered. A variety of URI formats and wildcard for host are supported, but app links like `airbnb://` or `fb://` are not. Examples of supported URIs:\n  - `http://localhost:3000/callback`\n  - `https://example.com/callback`\n  - `com.example.app:redirect_uri_path`\n  - ` *.subdomain.topleveldomain.com`\n",
+            "type": "string",
+            "in": "query",
+            "name": "redirect_uri"
+          },
+          {
+            "required": true,
+            "description": "Must be `code`. Indicates that the client wants an authorization code (using the `authorization_code` grant type).",
+            "in": "query",
+            "name": "response_type",
+            "type": "string"
+          },
+          {
+            "required": true,
+            "maxLength": 40,
+            "description": "The client ID obtained during application registration.",
+            "type": "string",
+            "in": "query",
+            "name": "client_id"
+          },
+          {
+            "maxLength": 256,
+            "enum": [
+              "openid",
+              "offline_access",
+              "email"
+            ],
+            "type": "string",
+            "in": "query",
+            "name": "scope"
+          },
+          {
+            "maxLength": 512,
+            "description": "Value to send the client to determine the state between the authorization request and the server response. Optional, but strongly recommended.",
+            "type": "string",
+            "in": "query",
+            "name": "state"
+          },
+          {
+            "maxLength": 256,
+            "description": "A unique shopper identifier (USID). If not provided, a new USID is generated.",
+            "type": "string",
+            "in": "query",
+            "name": "usid"
+          },
+          {
+            "maxLength": 256,
+            "description": "Name of an identity provider (IDP) to optionally redirect to, thereby skipping the IDP selection step.\n\nTo use a public client, set `hint` to `guest` and use a public client ID to get an authorization code. If no `hint` is provided, the preferred IDP of the tenant is used by default.\n\nFor session bridge authorization the `hint` should be set to `sb-user` for a registered customer and to `sb-guest` for a guest.",
+            "type": "string",
+            "in": "query",
+            "name": "hint"
+          },
+          {
+            "maxLength": 100,
+            "description": "The channel that this request is for. For an ECOM request, this is angalous to the site ID.",
+            "type": "string",
+            "in": "query",
+            "name": "channel_id"
+          },
+          {
+            "required": true,
+            "minLength": 43,
+            "maxLength": 128,
+            "description": "PKCE code challenge. Created by the client calling the `login` endpoint.\n\nThe `code_challenge` is created by SHA256 hashing the `code_verifier` and Base64 encoding the resulting hash.\n\nThe `code_verifier` should be a high entropy cryptographically random string with a minimum of 43 characters and a maximum of 128 characters.",
+            "type": "string",
+            "in": "query",
+            "name": "code_challenge"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/token": {
+      "post": {
+        "description": "Get the shopper or guest JWT access token and a refresh token. This is the second step of the OAuth 2.1 authorization code flow.\n\nFor a private client, an application is able to get an access token for the shopper through the back channel (a trusted server) by passing in the client credentials and the authorization code retrieved from the `authorize` endpoint.\n\nFor a guest user, get the shopper JWT access token and a refresh token. This is where a client appplication is able to get an access token for the guest user through the back channel (a trusted server) by passing in the client credentials.\n\nFor a public client using PKCE, an application will pass a PKCE `code_verifier` that matches the `code_challenge` that was used to `authorize` the customer along with the authorization code.\n\nWhen refreshing the access token with a private client ID and client secret, the refresh token is _not_ regenerated. However, when refreshing the access token with a public client ID, the refresh token is _always_ regenerated. The old refresh token is voided with every refresh call, so the refresh token on the client needs to be replaced to always store the new refresh token.\n\nSee the Body section for required parameters, including `grant_type` and others, depending on the value of `grant_type`.\n\n**Important**: We strongly recommended using the `channel_id` query parameter because **it will be required in the future**.",
+        "operationId": "getAccessToken",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/json": {
+                "access_token": "eyJ2ZXIiOiIxLjAiLCJraWQiOiJTTEFTIiwidHlwIjoiand0IiwiY2x2IjoiSjIuMS4wIiwiYWxnIjoiRVMyNTYifQ.eyJhdWQiOiJjb3JlL2Rldi9idGluZ2V5bHRtMiIsImF1dCI6IkdVSUQiLCJzdWIiOiJ1c2lkOjo1NGFkMmM1YS05MWYwLTQ0YWItODE3Yy03M2Q2Yjg2ODcyZDk6OnVwbjpndWVzdCIsIm5iZiI6MTU4Mjg0NTYyNCwiY3R4Ijoic2ZkYy5jb21tZXJjZWNsb3VkIiwiaXNzIjoiY29yZS9kZXYvYnRpbmdleWx0bTIiLCJzdHkiOiJVc2VyIiwiaXN0IjoxLCJleHAiOjE1ODI4NDU3NDQsImlhdCI6MTU4Mjg0NTY1NCwianRpIjoiQzJDOTA0ODg2NDA3MDkwNDg4NjQwNzMyMjExNzQ1ODEyMTQzIn0.2a6lMBSY17PrhDO8pvEk7PCXW_nkguMHi4J-Tuirkz-ETB6rnKyuRjF5yD6B55tMvm8dO8ulAHyDYqjObMxLJg",
+                "id_token": "eyJraWQiOiI3NGU2YjMxZS1lYTczLTQ3OTYtOWRkYi1jMDJmZGI4ZDgwYmUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2lkOmQ1MDBhMzY5LTc1MWQtNDkzYy1iNDAzLThmOThmYjg3MTdiNiIsImF1ZCI6IjU1M2FjOGFjLTRkYjktNGVkMy04MjVjLTNhZTNiZjVkMzI3YiIsImlzcyI6ImRldi51cy5zaG9wcGVyLmNjLnNhbGVzZm9yY2UuY29tIiwibmFtZSI6ImJsYWlyLnNsYXMudGVzdEBnbWFpbC5jb20iLCJleHAiOjE1OTExMTE0MzgsImlhdCI6MTU5MTEwOTYzOCwiZW1haWwiOiJibGFpci5zbGFzLnRlc3RAZ21haWwuY29tIn0.KgpAcq-G9Lz7IGnjkJlaFLFXYncVCwcVrRIuy3bEfgzRozqaDRvAori4oOz4RtgYjmoc5x2euoisHL0mVnHgPKOdYBty1wTJqneJEQt6hP4Kp0KFciID_ILCi-DE8VWS5t0NknnMP_iKhIkqcRL48iwPFUWkWA6AEWxE_yvJLNRLithsSxsx7EfBfpD8Hr2b5tMEwImQNmJNYGRTI4LSmcYspBORvJoAnfGpMC0kglxl40bhf5j4ItX4_DiWQC4zaGYD-HJV4BDr6C7iGCs5ZVPypF0yQD3iBio26fwj9Ys5WF9XMtPtqET2kqsz6fDC5GkE6HTUHH_r87jxbDq-8w",
+                "refresh_token": "EgMYpjfFKdlSy-a3PYeyihmP95IpIp3FaDpPmVH1yu8.lahomBi7zJbRa6yKAuAAiKu3lprTPsEueKwqcBvhRLU",
+                "expires_in": 900,
+                "refresh_token_expires_in": 7776000,
+                "token_type": "Bearer",
+                "usid": "18cda486-fe32-4e27-888b-6e4f89938e67",
+                "customer_id": "1000005",
+                "enc_user_id": "45D39A8499A95288F82855427EBA99B5",
+                "idp_access_token": "eyJraWQiOiJYS21HbHVuSm0zSlBTMHNjQXZXV19XQlYtRi1wMkxLSDR0V05UMHVVSjVJIiwiYWxnIjoiUlMyNTYifQ.eyJ2ZXIiOjEsImp0aSI6IkFULjFMY0xxTWhqM2t0N1FKeFhxQ0VtdGZOOVV2eUcweW1meDFxZG9BdzF1NWMub2FyeXhveHF0QUtxaVFMbkM1ZDYiLCJpc3MiOiJodHRwczovL2Rldi05NTY1MjM2Lm9rdGEuY29tIiwiYXVkIjoiaHR0cHM6Ly9kZXYtOTU2NTIzNi5va3RhLmNvbSIsInN1YiI6Im9rdGEuc2xhcy50ZXN0IiwiaWF0IjoxNjc5Njk4MzA4LCJleHAiOjE2Nzk3MDE5MDgsImNpZCI6IjBvYTJrNXNma0JXZ0poTEVHNWQ2IiwidWlkIjoiMDB1MzhxZGpuU2NMT0IxbXE1ZDYiLCJzY3AiOlsib2ZmbGluZV9hY2Nlc3MiLCJvcGVuaWQiLCJlbWFpbCIsInByb2ZpbGUiXSwiYXV0aF90aW1lIjoxNjc5Njk4MzA2fQ.FDbGsnZGwTYVKGSlAo6jqcjG2HQ_BqQKRk72M5h69DRHyOM4wngsEELN_Wtgj3E77sP7IOmIKjiK5SFP17ADMbKZptVr2pqaMVF3PuU3Cbl_MgXZValfT-z12jHRq9sHMfsdTjY2RnvG44ZDFKc2no8mdL6IJ1MfCaZT5Tql5Ktq_UgudaWFsYqad3ETcmp5Y8ivz1bFnqud0sO9D9JzYOtfd9h71JKcsSC2rXc_Si-INPKKaGl8CDgaLXxu_Am9twJpUenHLpy0BerhcVvdFz7_611E53xOT_Esrc1pe-XAZtlYsJFnhxTBDT342ukiSWk2m6juVappv1GsRfUf2g"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/TokenResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing access token."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Basic Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation that it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "description": "Base64-encoded string for HTTP Basic authentication. The string is composed of a client ID and client secret, separated by a colon (`:`), like this: `clientId:clientSecret`. Required unless the grant type is `authorization_code_pkce`.",
+            "type": "string",
+            "in": "header",
+            "name": "Authorization"
+          },
+          {
+            "in": "formData",
+            "name": "formData",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/session-bridge/token": {
+      "post": {
+        "description": "Get a shopper JWT access token for a registered customer using session bridge.\n\nFor public client id requests the grant_type must be set to `session_bridge`.\n\nFor  private client_id and secret the grant_type must be set to `client_credentials` along with a basic authorization header.",
+        "operationId": "getSessionBridgeAccessToken",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/json": {
+                "access_token": "eyJ2ZXIiOiIxLjAiLCJraWQiOiJTTEFTIiwidHlwIjoiand0IiwiY2x2IjoiSjIuMS4wIiwiYWxnIjoiRVMyNTYifQ.eyJhdWQiOiJjb3JlL2Rldi9idGluZ2V5bHRtMiIsImF1dCI6IkdVSUQiLCJzdWIiOiJ1c2lkOjo1NGFkMmM1YS05MWYwLTQ0YWItODE3Yy03M2Q2Yjg2ODcyZDk6OnVwbjpndWVzdCIsIm5iZiI6MTU4Mjg0NTYyNCwiY3R4Ijoic2ZkYy5jb21tZXJjZWNsb3VkIiwiaXNzIjoiY29yZS9kZXYvYnRpbmdleWx0bTIiLCJzdHkiOiJVc2VyIiwiaXN0IjoxLCJleHAiOjE1ODI4NDU3NDQsImlhdCI6MTU4Mjg0NTY1NCwianRpIjoiQzJDOTA0ODg2NDA3MDkwNDg4NjQwNzMyMjExNzQ1ODEyMTQzIn0.2a6lMBSY17PrhDO8pvEk7PCXW_nkguMHi4J-Tuirkz-ETB6rnKyuRjF5yD6B55tMvm8dO8ulAHyDYqjObMxLJg",
+                "id_token": "eyJraWQiOiI3NGU2YjMxZS1lYTczLTQ3OTYtOWRkYi1jMDJmZGI4ZDgwYmUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2lkOmQ1MDBhMzY5LTc1MWQtNDkzYy1iNDAzLThmOThmYjg3MTdiNiIsImF1ZCI6IjU1M2FjOGFjLTRkYjktNGVkMy04MjVjLTNhZTNiZjVkMzI3YiIsImlzcyI6ImRldi51cy5zaG9wcGVyLmNjLnNhbGVzZm9yY2UuY29tIiwibmFtZSI6ImJsYWlyLnNsYXMudGVzdEBnbWFpbC5jb20iLCJleHAiOjE1OTExMTE0MzgsImlhdCI6MTU5MTEwOTYzOCwiZW1haWwiOiJibGFpci5zbGFzLnRlc3RAZ21haWwuY29tIn0.KgpAcq-G9Lz7IGnjkJlaFLFXYncVCwcVrRIuy3bEfgzRozqaDRvAori4oOz4RtgYjmoc5x2euoisHL0mVnHgPKOdYBty1wTJqneJEQt6hP4Kp0KFciID_ILCi-DE8VWS5t0NknnMP_iKhIkqcRL48iwPFUWkWA6AEWxE_yvJLNRLithsSxsx7EfBfpD8Hr2b5tMEwImQNmJNYGRTI4LSmcYspBORvJoAnfGpMC0kglxl40bhf5j4ItX4_DiWQC4zaGYD-HJV4BDr6C7iGCs5ZVPypF0yQD3iBio26fwj9Ys5WF9XMtPtqET2kqsz6fDC5GkE6HTUHH_r87jxbDq-8w",
+                "refresh_token": "EgMYpjfFKdlSy-a3PYeyihmP95IpIp3FaDpPmVH1yu8.lahomBi7zJbRa6yKAuAAiKu3lprTPsEueKwqcBvhRLU",
+                "expires_in": 900,
+                "refresh_token_expires_in": 7776000,
+                "token_type": "Bearer",
+                "usid": "18cda486-fe32-4e27-888b-6e4f89938e67",
+                "customer_id": "1000005",
+                "enc_user_id": "45D39A8499A95288F82855427EBA99B5",
+                "idp_access_token": ""
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/TokenResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing authorization token."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "503": {
+            "description": "Gateway Error",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation that it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "in": "formData",
+            "name": "formData",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/trusted-system/token": {
+      "post": {
+        "description": "Get a shopper JWT access token for a registered customer whose credentials are stored using a third party system.\n\nFor external trusted-system requests, a basic authorization header that includes a SLAS client ID and SLAS client secret can be used in place of the bearer token.\n\nFor internal trusted-system requests, the bearer token must be a C2C JWT.",
+        "operationId": "getTrustedSystemAccessToken",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/json": {
+                "access_token": "eyJ2ZXIiOiIxLjAiLCJraWQiOiJTTEFTIiwidHlwIjoiand0IiwiY2x2IjoiSjIuMS4wIiwiYWxnIjoiRVMyNTYifQ.eyJhdWQiOiJjb3JlL2Rldi9idGluZ2V5bHRtMiIsImF1dCI6IkdVSUQiLCJzdWIiOiJ1c2lkOjo1NGFkMmM1YS05MWYwLTQ0YWItODE3Yy03M2Q2Yjg2ODcyZDk6OnVwbjpndWVzdCIsIm5iZiI6MTU4Mjg0NTYyNCwiY3R4Ijoic2ZkYy5jb21tZXJjZWNsb3VkIiwiaXNzIjoiY29yZS9kZXYvYnRpbmdleWx0bTIiLCJzdHkiOiJVc2VyIiwiaXN0IjoxLCJleHAiOjE1ODI4NDU3NDQsImlhdCI6MTU4Mjg0NTY1NCwianRpIjoiQzJDOTA0ODg2NDA3MDkwNDg4NjQwNzMyMjExNzQ1ODEyMTQzIn0.2a6lMBSY17PrhDO8pvEk7PCXW_nkguMHi4J-Tuirkz-ETB6rnKyuRjF5yD6B55tMvm8dO8ulAHyDYqjObMxLJg",
+                "id_token": "eyJraWQiOiI3NGU2YjMxZS1lYTczLTQ3OTYtOWRkYi1jMDJmZGI4ZDgwYmUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2lkOmQ1MDBhMzY5LTc1MWQtNDkzYy1iNDAzLThmOThmYjg3MTdiNiIsImF1ZCI6IjU1M2FjOGFjLTRkYjktNGVkMy04MjVjLTNhZTNiZjVkMzI3YiIsImlzcyI6ImRldi51cy5zaG9wcGVyLmNjLnNhbGVzZm9yY2UuY29tIiwibmFtZSI6ImJsYWlyLnNsYXMudGVzdEBnbWFpbC5jb20iLCJleHAiOjE1OTExMTE0MzgsImlhdCI6MTU5MTEwOTYzOCwiZW1haWwiOiJibGFpci5zbGFzLnRlc3RAZ21haWwuY29tIn0.KgpAcq-G9Lz7IGnjkJlaFLFXYncVCwcVrRIuy3bEfgzRozqaDRvAori4oOz4RtgYjmoc5x2euoisHL0mVnHgPKOdYBty1wTJqneJEQt6hP4Kp0KFciID_ILCi-DE8VWS5t0NknnMP_iKhIkqcRL48iwPFUWkWA6AEWxE_yvJLNRLithsSxsx7EfBfpD8Hr2b5tMEwImQNmJNYGRTI4LSmcYspBORvJoAnfGpMC0kglxl40bhf5j4ItX4_DiWQC4zaGYD-HJV4BDr6C7iGCs5ZVPypF0yQD3iBio26fwj9Ys5WF9XMtPtqET2kqsz6fDC5GkE6HTUHH_r87jxbDq-8w",
+                "refresh_token": "EgMYpjfFKdlSy-a3PYeyihmP95IpIp3FaDpPmVH1yu8.lahomBi7zJbRa6yKAuAAiKu3lprTPsEueKwqcBvhRLU",
+                "expires_in": 900,
+                "refresh_token_expires_in": 7776000,
+                "token_type": "Bearer",
+                "usid": "18cda486-fe32-4e27-888b-6e4f89938e67",
+                "customer_id": "1000005",
+                "enc_user_id": "45D39A8499A95288F82855427EBA99B5",
+                "idp_access_token": ""
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/TokenResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing access token."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "503": {
+            "description": "Gateway Error",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation that it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "description": "Base64-encoded string for HTTP Basic authentication. The string is composed of a client ID and client secret, separated by a colon (`:`), like this: `clientId:clientSecret`. Required unless the grant type is `authorization_code_pkce`.",
+            "type": "string",
+            "in": "header",
+            "name": "Authorization"
+          },
+          {
+            "in": "formData",
+            "name": "formData",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/trusted-agent/authorize": {
+      "get": {
+        "description": "Obtains a new agent on behalf authorization token for a registered customer.",
+        "operationId": "getTrustedAgentAuthorizationToken",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "303": {
+            "description": "Success. Locaion header with `redirect_uri` to Account Manager to allow the Agent to log in.",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "schema": {
+              "example": "Location Header - https://account.demandware.com:443/dwsso/UI/Login?realm=/&goto=https://account.demandware.com:443/dwsso/oauth2/authorize?client_id=6739cb07-2f5f-4e16-a88a-8113a3cb5512&redirect_uri=https://stg.us1.shopper.cc.salesforce.com/api/v1/trusted-agent/callback",
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing client_id."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation that it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "required": true,
+            "maxLength": 40,
+            "description": "The SLAS public client ID or SLAS private client ID for use with internal, trusted-agent requests. When using a private client ID a PKCE code challenge is not required.",
+            "type": "string",
+            "in": "query",
+            "name": "client_id"
+          },
+          {
+            "required": true,
+            "maxLength": 100,
+            "description": "The channel (ECOM site) that the user is associated with.",
+            "type": "string",
+            "in": "query",
+            "name": "channel_id"
+          },
+          {
+            "minLength": 43,
+            "maxLength": 128,
+            "description": "PKCE code challenge. Created by the caller.\n\nThe `code_challenge` is created by SHA256 hashing the `code_verifier` and Base64 encoding the resulting hash.\n\nThe `code_verifier` should be a high entropy cryptographically random string with a minimum of 43 characters and a maximum of 128 characters.\n\nThe `code_challenge` is not needed if a using SLAS private `client_id`.",
+            "type": "string",
+            "in": "query",
+            "name": "code_challenge",
+            "required": true
+          },
+          {
+            "maxLength": 128,
+            "description": "The ID of the shopper for trusted agent access.",
+            "type": "string",
+            "in": "query",
+            "name": "login_id",
+            "required": true
+          },
+          {
+            "required": true,
+            "maxLength": 16,
+            "description": "The IDP that the shopper is associated with.",
+            "type": "string",
+            "in": "query",
+            "name": "idp_origin"
+          },
+          {
+            "required": true,
+            "maxLength": 256,
+            "description": "The redirect for Account Manager to redirect to. A variety of URI formats and wildcard for host are supported, but app links like `airbnb://` or `fb://` are not. Examples of supported URIs:\n  - `http://localhost:3000/callback`\n  - `https://example.com/callback`\n  - `com.example.app:redirect_uri_path`\n  - ` *.subdomain.topleveldomain.com`\n",
+            "type": "string",
+            "in": "query",
+            "name": "redirect_uri"
+          },
+          {
+            "required": true,
+            "description": "Must be `code`. Indicates that the caller wants an authorization code.",
+            "in": "query",
+            "name": "response_type",
+            "type": "string"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/trusted-agent/token": {
+      "post": {
+        "description": "Get a shopper JWT access token for a registered customer using a trusted agent (merchant).\n\nIf using a SLAS private client ID, you must also use an `_sfdc_client_auth` header. \n\nThe value of the `_sfdc_client_auth` header must be a Base64-encoded string. The string is composed of a SLAS private client ID and client secret, separated by a colon (`:`). For example, `privateClientId:privateClientsecret` becomes `cHJpdmF0ZUNsaWVudElkOnByaXZhdGVDbGllbnRzZWNyZXQ=` after Base64 encoding.",
+        "operationId": "getTrustedAgentAccessToken",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/json": {
+                "access_token": "eyJ2ZXIiOiIxLjAiLCJraWQiOiJTTEFTIiwidHlwIjoiand0IiwiY2x2IjoiSjIuMS4wIiwiYWxnIjoiRVMyNTYifQ.eyJhdWQiOiJjb3JlL2Rldi9idGluZ2V5bHRtMiIsImF1dCI6IkdVSUQiLCJzdWIiOiJ1c2lkOjo1NGFkMmM1YS05MWYwLTQ0YWItODE3Yy03M2Q2Yjg2ODcyZDk6OnVwbjpndWVzdCIsIm5iZiI6MTU4Mjg0NTYyNCwiY3R4Ijoic2ZkYy5jb21tZXJjZWNsb3VkIiwiaXNzIjoiY29yZS9kZXYvYnRpbmdleWx0bTIiLCJzdHkiOiJVc2VyIiwiaXN0IjoxLCJleHAiOjE1ODI4NDU3NDQsImlhdCI6MTU4Mjg0NTY1NCwianRpIjoiQzJDOTA0ODg2NDA3MDkwNDg4NjQwNzMyMjExNzQ1ODEyMTQzIn0.2a6lMBSY17PrhDO8pvEk7PCXW_nkguMHi4J-Tuirkz-ETB6rnKyuRjF5yD6B55tMvm8dO8ulAHyDYqjObMxLJg",
+                "id_token": "eyJraWQiOiI3NGU2YjMxZS1lYTczLTQ3OTYtOWRkYi1jMDJmZGI4ZDgwYmUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2lkOmQ1MDBhMzY5LTc1MWQtNDkzYy1iNDAzLThmOThmYjg3MTdiNiIsImF1ZCI6IjU1M2FjOGFjLTRkYjktNGVkMy04MjVjLTNhZTNiZjVkMzI3YiIsImlzcyI6ImRldi51cy5zaG9wcGVyLmNjLnNhbGVzZm9yY2UuY29tIiwibmFtZSI6ImJsYWlyLnNsYXMudGVzdEBnbWFpbC5jb20iLCJleHAiOjE1OTExMTE0MzgsImlhdCI6MTU5MTEwOTYzOCwiZW1haWwiOiJibGFpci5zbGFzLnRlc3RAZ21haWwuY29tIn0.KgpAcq-G9Lz7IGnjkJlaFLFXYncVCwcVrRIuy3bEfgzRozqaDRvAori4oOz4RtgYjmoc5x2euoisHL0mVnHgPKOdYBty1wTJqneJEQt6hP4Kp0KFciID_ILCi-DE8VWS5t0NknnMP_iKhIkqcRL48iwPFUWkWA6AEWxE_yvJLNRLithsSxsx7EfBfpD8Hr2b5tMEwImQNmJNYGRTI4LSmcYspBORvJoAnfGpMC0kglxl40bhf5j4ItX4_DiWQC4zaGYD-HJV4BDr6C7iGCs5ZVPypF0yQD3iBio26fwj9Ys5WF9XMtPtqET2kqsz6fDC5GkE6HTUHH_r87jxbDq-8w",
+                "refresh_token": "EgMYpjfFKdlSy-a3PYeyihmP95IpIp3FaDpPmVH1yu8.lahomBi7zJbRa6yKAuAAiKu3lprTPsEueKwqcBvhRLU",
+                "expires_in": 900,
+                "token_type": "Bearer",
+                "refresh_token_expires_in": 7776000,
+                "usid": "18cda486-fe32-4e27-888b-6e4f89938e67",
+                "customer_id": "1000005",
+                "enc_user_id": "45D39A8499A95288F82855427EBA99B5",
+                "idp_access_token": ""
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/TokenResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing authorization token."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "503": {
+            "description": "Gateway Error",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation that it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "description": "This is the `Bearer` token returned from Account Manager after the trusted agent on behalf of (TAOB) authorize call.",
+            "type": "string",
+            "in": "header",
+            "name": "Authorization"
+          },
+          {
+            "description": "\"Base64-encoded string of client credentials. The string is composed of a client ID and client secret, separated by a colon (`:`), like this: `clientId:clientSecret`. (Do not add the string `\"Basic\"`.)\n\nThe `_sfdc_client_auth` header is only required when using a SLAS private client ID.\"",
+            "type": "string",
+            "in": "header",
+            "name": "_sfdc_client_auth"
+          },
+          {
+            "in": "formData",
+            "name": "formData",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/password/reset": {
+      "post": {
+        "description": "Request a reset password token",
+        "operationId": "getPasswordResetToken",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing request parameters."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "412": {
+            "description": "Precondition Failure",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "precondition_failure",
+                "error_description": "Depenant service is not available."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "in": "formData",
+            "name": "formData",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/password/action": {
+      "post": {
+        "description": "Creates a new password",
+        "operationId": "resetPassword",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing request parameters."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "503": {
+            "description": "Gateway Error",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "gateway_server_error",
+                "error_description": "A service that the server relies on is down or is having difficulty."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "description": "Base64-encoded string for HTTP Basic authentication. The string is composed of a client ID and client secret, separated by a colon (`:`), like this: `clientId:clientSecret`",
+            "type": "string",
+            "in": "header",
+            "name": "Authorization"
+          },
+          {
+            "in": "formData",
+            "name": "formData",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/passwordless/token": {
+      "post": {
+        "description": "Issue a shopper token (JWT).",
+        "operationId": "getPasswordLessAccessToken",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/json": {
+                "access_token": "eyJ2ZXIiOiIxLjAiLCJraWQiOiJTTEFTIiwidHlwIjoiand0IiwiY2x2IjoiSjIuMS4wIiwiYWxnIjoiRVMyNTYifQ.eyJhdWQiOiJjb3JlL2Rldi9idGluZ2V5bHRtMiIsImF1dCI6IkdVSUQiLCJzdWIiOiJ1c2lkOjo1NGFkMmM1YS05MWYwLTQ0YWItODE3Yy03M2Q2Yjg2ODcyZDk6OnVwbjpndWVzdCIsIm5iZiI6MTU4Mjg0NTYyNCwiY3R4Ijoic2ZkYy5jb21tZXJjZWNsb3VkIiwiaXNzIjoiY29yZS9kZXYvYnRpbmdleWx0bTIiLCJzdHkiOiJVc2VyIiwiaXN0IjoxLCJleHAiOjE1ODI4NDU3NDQsImlhdCI6MTU4Mjg0NTY1NCwianRpIjoiQzJDOTA0ODg2NDA3MDkwNDg4NjQwNzMyMjExNzQ1ODEyMTQzIn0.2a6lMBSY17PrhDO8pvEk7PCXW_nkguMHi4J-Tuirkz-ETB6rnKyuRjF5yD6B55tMvm8dO8ulAHyDYqjObMxLJg",
+                "id_token": "eyJraWQiOiI3NGU2YjMxZS1lYTczLTQ3OTYtOWRkYi1jMDJmZGI4ZDgwYmUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2lkOmQ1MDBhMzY5LTc1MWQtNDkzYy1iNDAzLThmOThmYjg3MTdiNiIsImF1ZCI6IjU1M2FjOGFjLTRkYjktNGVkMy04MjVjLTNhZTNiZjVkMzI3YiIsImlzcyI6ImRldi51cy5zaG9wcGVyLmNjLnNhbGVzZm9yY2UuY29tIiwibmFtZSI6ImJsYWlyLnNsYXMudGVzdEBnbWFpbC5jb20iLCJleHAiOjE1OTExMTE0MzgsImlhdCI6MTU5MTEwOTYzOCwiZW1haWwiOiJibGFpci5zbGFzLnRlc3RAZ21haWwuY29tIn0.KgpAcq-G9Lz7IGnjkJlaFLFXYncVCwcVrRIuy3bEfgzRozqaDRvAori4oOz4RtgYjmoc5x2euoisHL0mVnHgPKOdYBty1wTJqneJEQt6hP4Kp0KFciID_ILCi-DE8VWS5t0NknnMP_iKhIkqcRL48iwPFUWkWA6AEWxE_yvJLNRLithsSxsx7EfBfpD8Hr2b5tMEwImQNmJNYGRTI4LSmcYspBORvJoAnfGpMC0kglxl40bhf5j4ItX4_DiWQC4zaGYD-HJV4BDr6C7iGCs5ZVPypF0yQD3iBio26fwj9Ys5WF9XMtPtqET2kqsz6fDC5GkE6HTUHH_r87jxbDq-8w",
+                "refresh_token": "EgMYpjfFKdlSy-a3PYeyihmP95IpIp3FaDpPmVH1yu8.lahomBi7zJbRa6yKAuAAiKu3lprTPsEueKwqcBvhRLU",
+                "expires_in": 900,
+                "refresh_token_expires_in": 7776000,
+                "token_type": "Bearer",
+                "usid": "18cda486-fe32-4e27-888b-6e4f89938e67",
+                "customer_id": "1000005",
+                "enc_user_id": "45D39A8499A95288F82855427EBA99B5",
+                "idp_access_token": ""
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/TokenResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing access token."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "503": {
+            "description": "Gateway Error",
+            "headers": {
+              "X-RateLimit-1M-Limit": {
+                "description": "The 1 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Remaining": {
+                "description": "The 1 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-1M-Reset": {
+                "description": "The 1 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Limit": {
+                "description": "The 5 minute maximum number of requests permitted per hour.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Remaining": {
+                "description": "The 5 minute number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-5M-Reset": {
+                "description": "The 5 minute time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/problem+json": {
+                "error": "gateway_server_error",
+                "error_description": "A service that the server relies on is down or is having difficulty."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "description": "Base64-encoded string for HTTP Basic authentication. The string is composed of a client ID and client secret, separated by a colon (`:`), like this: `clientId:clientSecret`",
+            "type": "string",
+            "in": "header",
+            "name": "Authorization"
+          },
+          {
+            "in": "formData",
+            "name": "formData",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/revoke": {
+      "post": {
+        "description": "Invalidate the refresh token. A basic auth header with Base64-encoded `clientId:secret` is required in the Authorization header, and the refresh token to be revoked is required in the body.",
+        "operationId": "revokeToken",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "examples": {
+              "application/json": {
+                "access_token": "",
+                "id_token": "null",
+                "refresh_token": "EnL9U2f3-WiVPwL60CFBI21UY_oxWAwX5JkgO-X12Vs",
+                "expires_in": 0,
+                "refresh_token_expires_in": 0,
+                "token_type": "Bearer",
+                "usid": "null",
+                "customer_id": "null",
+                "enc_user_id": "null",
+                "idp_access_token": ""
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/TokenResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing refresh token."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Basic Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation that it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "required": true,
+            "description": "Base64 string for HTTP Basic authentication.",
+            "type": "string",
+            "in": "header",
+            "name": "Authorization"
+          },
+          {
+            "in": "formData",
+            "name": "formData",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/introspect": {
+      "post": {
+        "description": "Returns the token properties. A basic auth header with Base64-encoded `clientId:secret` is required in the Authorization header, as well as an access token or refresh token. Use `token_type_hint` to help identify the token.",
+        "operationId": "introspectToken",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "example": {
+                "active": true,
+                "scope": "offline_access openid",
+                "client_id": "553ac8ac-4db9-4ed3-825c-3ae3bf5d327b",
+                "sub": "usid:edbf780a-2d83-4e82-9f64-8d051e3538d2::uido:Google::upn:blair.slas.test@gmail.com::uidn:Foo SLAS-Test",
+                "exp": 1602523099,
+                "iat": 1594747099,
+                "iss": "https://localhost:9000/",
+                "token_type": "refresh_token"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing access token or refresh token"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_client",
+                "error_description": "Basic Authorization failed."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation that it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "required": true,
+            "description": "Base64 string for HTTP Basic authentication.",
+            "type": "string",
+            "in": "header",
+            "name": "Authorization"
+          },
+          {
+            "in": "formData",
+            "name": "formData",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/userinfo": {
+      "get": {
+        "description": "Returns a JSON listing of claims about the currently authenticated user.",
+        "operationId": "getUserInfo",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "example": {
+                "sub": "98a84e4b-be50-422a-ab04-e9034e859eb9",
+                "name": "Slas Test",
+                "given_name": "Slas",
+                "family_name": "Test",
+                "email": "slas-okta-test@test.org",
+                "external_id": "okta-00u38qdjnScLOB1mq5d6",
+                "customer_id": "abxHc1lblIlKwRl0k1mqYYkewY",
+                "validated": true
+              },
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Bad or missing access token."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation that it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "maxLength": 100,
+            "description": "Used when getting user information for a SFCC login. For an ECOM customer, this is angalous to the site ID. Required when getting user information for an ECOM customer.",
+            "type": "string",
+            "in": "query",
+            "name": "channel_id"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/.well-known/openid-configuration": {
+      "get": {
+        "description": "Returns a JSON listing of the OpenID/OAuth endpoints, supported scopes and claims, public keys used to sign the tokens, and other details.\n\nFor performance purposes, the `/jwks` endpoint is rate limited to 25 call per minute.\n",
+        "operationId": "getWellknownOpenidConfiguration",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "example": {
+                "issuer": "https://stg.us.shopper.cc.salesforce.com/api/v1/organizations/zzzz_tst/oauth2",
+                "authorization_endpoint": "https://stg.us.shopper.cc.salesforce.com/api/v1/organizations/zzzz_tst/oauth2/authorize",
+                "token_endpoint": "https://stg.us.shopper.cc.salesforce.com/api/v1/organizations/zzzz_tst/oauth2/token",
+                "revocation_endpoint": "https://stg.us.shopper.cc.salesforce.com/api/v1/organizations/zzzz_tst/oauth2/revoke",
+                "userinfo_endpoint": "https://stg.us.shopper.cc.salesforce.com/api/v1/organizations/zzzz_tst/oauth2/userinfo",
+                "jwks_uri": "https://stg.us.shopper.cc.salesforce.com/api/v1/organizations/zzzz_tst/oauth2/jwks",
+                "grant_types_supported": [
+                  "authorization_code",
+                  "authorization_code_pkce",
+                  "client_credentials",
+                  "refresh_token"
+                ],
+                "id_token_encryption_enc_values_supported": [
+                  "A256GCM"
+                ],
+                "subject_types_supported": [
+                  "public"
+                ],
+                "claims_supported": [
+                  "email",
+                  "name",
+                  "given_name",
+                  "family_name",
+                  "sub"
+                ],
+                "scopes_supported": [
+                  "email",
+                  "openid",
+                  "profile"
+                ],
+                "response_types_supported": [
+                  "code",
+                  "token",
+                  "token id_token"
+                ],
+                "code_challenge_methods_supported": [
+                  "S256"
+                ]
+              },
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Tenant Id Exception - Must be a well-formed tenantId"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation that it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/oauth2/jwks": {
+      "get": {
+        "description": "Returns a JSON Web Key Set (JWKS) containing the current, past, and future public keys. The key set enables clients to validate the Shopper JSON Web Token (JWT) issued by SLAS.\n\nFor performance purposes, the `/jwks` endpoint is rate limited to 25 call per minute.\n",
+        "operationId": "getJwksUri",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "example": {
+                "keys": [
+                  {
+                    "kty": "EC",
+                    "crv": "P-256",
+                    "use": "sig",
+                    "kid": "2d670fa8-0f28-44a1-b8b4-87a6d2feb1d8",
+                    "x": "_2tPqxGhgX6cA5Qg7v6UH_9om8OR3-OehkgXXWraTp8",
+                    "y": "DAykmQPtf282buIcL0rLwKYbK6ApgripMjazdAthUFw"
+                  },
+                  {
+                    "kty": "EC",
+                    "crv": "P-256",
+                    "use": "sig",
+                    "kid": "eb70508f-4d64-46f7-a3d5-b36558d6e6b6",
+                    "x": "VV0JVJFhkz71wY0E73Z-snorZ5oJf1QOdkIbCjyMqLs",
+                    "y": "QLkqBVSPPrkd7HjaSEMgMU9Ob-FDpg1W-oLq5I4ExqQ"
+                  }
+                ]
+              },
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "examples": {
+              "application/problem+json": {
+                "error": "invalid_request",
+                "error_description": "Tenant Id Exception - Must be a well-formed tenantId"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "examples": {
+              "application/problem+json": {
+                "error": "server_error",
+                "error_description": "The server has encountered a situation it doesn't know how to handle."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/Oauth2ErrorResponse"
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    }
+  }
+}

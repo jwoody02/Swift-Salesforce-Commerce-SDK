@@ -1,0 +1,367 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Shopper Context",
+    "description": "# API Overview\n\nWith the Shopper Context API, you can set any context information as a key/value pair and use it to retrieve personalized promotions, payment methods, and shipping methods. The context information that is set is evaluated against the customer group definitions to determine a customer group (shopper segment) and then used to activate the experiences that are associated with a particular segment, such as promotions.\n\nYou can also get personalized API responses triggered by shopper context from the [Open Commerce API](https://documentation.b2c.commercecloud.salesforce.com/DOC1/topic/com.demandware.dochelp/OCAPI/current/usage/OpenCommerceAPI.html) (OCAPI). Support for both the B2C Commerce API and OCAPI allows shopper context to be used in hybrid deployments.\n\n**Note**: The context is valid for 1 day for guest shoppers and 7 days for registered shoppers. To extend the context set, create a new context. As a best practice, refresh your contexts periodically to ensure that the right personalized experience is rendered for your shoppers.\n\n**Important:** For detailed usage information, see the [Shopper Context guides](https://developer.salesforce.com/docs/commerce/commerce-api/guide/shopper-context-api.html).\n\nTo use the Shopper Context API, you must:\n\n- Get a JSON Web Token (JWT) for the Shopper Login and API Access Service (SLAS).\n- Add `sfcc.shopper-context.rw` to the scopes configuration for the SLAS API client.\n\nFor more information, see [Authorization for Shopper APIs](https://developer.salesforce.com/docs/commerce/commerce-api/guide/authorization-for-shopper-apis.html) in the Get Started guides.\n\n**Warning**: As with all APIs, never store access tokens in the browser because this creates a security vulnerability.\n",
+    "version": "v1"
+  },
+  "x-basePath": "{shortCode}.api.commercecloud.salesforce.com/shopper/shopper-context/{version}",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "definitions": {
+    "ShopperContext": {
+      "description": "A shoppers' context represented as key-value string pairs.",
+      "example": "Can not resolve Examples/shopper-context-example.raml",
+      "type": "object",
+      "properties": {
+        "effectiveDateTime": {
+          "description": "Qualifier to set the effective date time for the context to apply. For example, \"Shop the Future\" use cases. If not provided, the current dateTime will be assumed.",
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "nil"
+            }
+          ]
+        },
+        "sourceCode": {
+          "description": "Qualifier to set the source code for the context to apply. Set the source code to evaluate source code group that triggers the promotion (campaign assignment) and Price books (assigned to Source code group).",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "nil"
+            }
+          ]
+        },
+        "customQualifiers": {
+          "description": "Map of custom qualifiers for the shopper context. Set this object to trigger pricing and promotion experiences using a dynamic session-based customer group. Object size is limited to 20 key-value pairs (properties).",
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "nil"
+              }
+            ]
+          }
+        },
+        "assignmentQualifiers": {
+          "description": "Map of assignment qualifiers for the shopper context. Set this object when using the assignment framework to activate experiences based on assignment qualifiers. Currently, only pricing and promotion experiences are supported. Object size is limited to 20 key-value pairs (properties).",
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "nil"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "ApiStandards.ErrorResponse": {
+      "$ref": "#/definitions/ApiStandards.Error.Error"
+    },
+    "ApiStandards.Error.Error": {
+      "description": "Errors reported by all APIs correspond to this error document format. \nThis format follows the RFC [IETF rfc7807](https://tools.ietf.org/html/rfc7807). \nThis may include additional properties as necessary to provide additional details \nregarding the error message.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/not-found",
+          "type": "string"
+        },
+        "title": {
+          "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+          "example": "Not Found.",
+          "type": "string"
+        },
+        "detail": {
+          "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+          "example": "The requested resource was not found.",
+          "type": "string"
+        },
+        "instance": {
+          "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "/account/12345/msgs/abc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    }
+  },
+  "paths": {
+    "/organizations/{organizationId}/shopper-context/{usid}": {
+      "get": {
+        "description": "Gets the shopper's context based on the shopperJWT.",
+        "operationId": "getShopperContext",
+        "responses": {
+          "200": {
+            "description": "Success retrieving Shopper Context.",
+            "examples": {
+              "application/json": {
+                "shopperContext": "Can not resolve Examples/shopper-context-example.raml"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/ShopperContext"
+            }
+          },
+          "400": {
+            "description": "Usid in incoming request does not match Usid in token.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-400-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Your shopper JWT is invalid and could not be used to identify the API client.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-401-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Your shopper JWT is valid, but you have no permissions to access the resource.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-403-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Shopper Context for ORGANIZATION_ID - f_ecom_bhbv_prd and USID - 7e1f65fb-185c-4788-8cec-05fef8dac77d not found in Repository.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-404-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "minLength": 1,
+            "description": "The identifer of the site that a request is being made in the context of. It is strongly recommended to pass in the siteId in the call.",
+            "type": "string",
+            "in": "query",
+            "name": "siteId"
+          }
+        ]
+      },
+      "put": {
+        "description": "Creates the shopper's context based on shopperJWT.",
+        "operationId": "createShopperContext",
+        "responses": {
+          "200": {
+            "description": "Updated Shopper Context."
+          },
+          "201": {
+            "description": "Created Shopper Context."
+          },
+          "400": {
+            "description": "Usid in incoming request does not match Usid in token.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-400-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Your shopper JWT is invalid and could not be used to identify the API client.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-401-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Your shopper JWT is valid, but you have no permissions to access the resource.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-403-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/definitions/ShopperContext"
+            },
+            "in": "body",
+            "name": "body",
+            "required": true
+          },
+          {
+            "minLength": 1,
+            "description": "The identifer of the site that a request is being made in the context of. It is strongly recommended to pass in the siteId in the call.",
+            "type": "string",
+            "in": "query",
+            "name": "siteId"
+          }
+        ]
+      },
+      "delete": {
+        "description": "Gets the shopper's context based on the shopperJWT.",
+        "operationId": "deleteShopperContext",
+        "responses": {
+          "204": {
+            "description": "Delete successfull."
+          },
+          "400": {
+            "description": "Usid in incoming request does not match Usid in token.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-400-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Your shopper JWT is invalid and could not be used to identify the API client.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-401-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Your shopper JWT is valid, but you have no permissions to access the resource.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-403-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Shopper Context for ORGANIZATION_ID - f_ecom_bhbv_prd and USID - 7e1f65fb-185c-4788-8cec-05fef8dac77d not found in Repository.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-404-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "minLength": 1,
+            "description": "The identifer of the site that a request is being made in the context of. It is strongly recommended to pass in the siteId in the call.",
+            "type": "string",
+            "in": "query",
+            "name": "siteId"
+          }
+        ]
+      },
+      "patch": {
+        "description": "Updates the shopper's context based on the Shopper JWT. If the shopper context exists, it's updated with the patch body. If a customer qualifier or an `effectiveDateTime` is already present in the existing shopper context, its value is replaced by the corresponding value from the patch body. If a customer qualifers' value is set to `null` it's deleted from existing shopper context. If `effectiveDateTime` value is set to set to an empty string (\"\"), it's deleted from existing shopper context. If `effectiveDateTime` value is set to `null` it's ignored. If an `effectiveDateTime` or customer qualifiiers' value is new, it's added to the existing Shopper context.",
+        "operationId": "updateShopperContext",
+        "responses": {
+          "200": {
+            "description": "Updated Shopper Context.",
+            "examples": {
+              "application/json": {
+                "shopperContext": "Can not resolve Examples/shopper-context-update-response-example.raml"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/ShopperContext"
+            }
+          },
+          "400": {
+            "description": "Usid in incoming request does not match Usid in token.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-400-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Your shopper JWT is invalid and could not be used to identify the API client.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-401-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Your shopper JWT is valid, but you have no permissions to access the resource.",
+            "examples": {
+              "application/json": "Can not resolve Examples/shopper-context-403-example.raml"
+            },
+            "schema": {
+              "$ref": "#/definitions/ApiStandards.ErrorResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "example": {
+                "shopperContext": "Can not resolve Examples/shopper-context-update-request-example.raml"
+              },
+              "$ref": "#/definitions/ShopperContext"
+            },
+            "in": "body",
+            "name": "body",
+            "required": true
+          },
+          {
+            "minLength": 1,
+            "description": "The identifer of the site that a request is being made in the context of. It is strongly recommended to pass in the siteId in the call.",
+            "type": "string",
+            "in": "query",
+            "name": "siteId"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "required": true,
+          "description": "The Shopper's unique identifier. It is a required parameter and is part of the response from the Guest or Registered User Shopper Login (SLAS) API call.",
+          "type": "string",
+          "in": "path",
+          "name": "usid"
+        },
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    }
+  }
+}

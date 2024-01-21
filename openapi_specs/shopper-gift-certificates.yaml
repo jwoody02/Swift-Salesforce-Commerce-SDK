@@ -1,0 +1,271 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Shopper Gift Certificates",
+    "description": "APIs to return Gift Certificate details.",
+    "version": "v1"
+  },
+  "x-basePath": "{shortCode}.api.commercecloud.salesforce.com/pricing/shopper-gift-certificates/{version}",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "definitions": {
+    "GiftCertificate": {
+      "description": "Document representing a gift certificate.",
+      "example": "Can not resolve Examples/gift-certificate-example.raml",
+      "properties": {
+        "amount": {
+          "format": "double",
+          "description": "The gift certificate original amount.",
+          "type": "number"
+        },
+        "balance": {
+          "format": "double",
+          "description": "The gift certificate remaining balance.",
+          "type": "number"
+        },
+        "description": {
+          "description": "The gift certificate description.",
+          "type": "string"
+        },
+        "enabled": {
+          "description": "Is the gift certificate is enabled?",
+          "type": "boolean"
+        },
+        "maskedGiftCertificateCode": {
+          "description": "The masked gift certificate code.",
+          "type": "string"
+        },
+        "merchantId": {
+          "description": "The merchant ID.",
+          "type": "string"
+        },
+        "message": {
+          "description": "The message.",
+          "type": "string"
+        },
+        "recipientEmail": {
+          "description": "The recipient email.",
+          "type": "string"
+        },
+        "recipientName": {
+          "description": "The recipient name.",
+          "type": "string"
+        },
+        "senderName": {
+          "description": "The sender name.",
+          "type": "string"
+        },
+        "status": {
+          "description": "The gift certificate status.",
+          "enum": [
+            "pending",
+            "issued",
+            "partially_redeemed",
+            "redeemed"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "balance",
+        "enabled",
+        "maskedGiftCertificateCode",
+        "merchantId",
+        "recipientEmail",
+        "recipientName",
+        "senderName",
+        "status"
+      ],
+      "type": "object"
+    },
+    "GiftCertificateRequest": {
+      "description": "Document representing a gift certificate request data.",
+      "properties": {
+        "giftCertificateCode": {
+          "description": "The gift certificate code.",
+          "example": "MYGIFTCERTIFICATECODE",
+          "type": "string"
+        }
+      },
+      "required": [
+        "giftCertificateCode"
+      ],
+      "type": "object"
+    },
+    "ApiStandards.ErrorResponse": {
+      "$ref": "#/definitions/ApiStandards.Error.Error"
+    },
+    "ApiStandards.Error.Error": {
+      "description": "Errors reported by all APIs correspond to this error document format. \nThis format follows the RFC [IETF rfc7807](https://tools.ietf.org/html/rfc7807). \nThis may include additional properties as necessary to provide additional details \nregarding the error message.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/not-found",
+          "type": "string"
+        },
+        "title": {
+          "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+          "example": "Not Found.",
+          "type": "string"
+        },
+        "detail": {
+          "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+          "example": "The requested resource was not found.",
+          "type": "string"
+        },
+        "instance": {
+          "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "/account/12345/msgs/abc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "CommerceCloudStandards.SiteId": {
+      "minLength": 1,
+      "description": "The identifer of the site that a request is being made in the context of. Attributes might have site specific values, and some objects may only be assigned to specific sites",
+      "example": "SiteGenesis",
+      "type": "string"
+    }
+  },
+  "responses": {
+    "trait:ApiStandards.RateLimited:429": {
+      "description": "The user has sent too many requests in a given amount of time (\"rate limiting\")",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "example": {
+          "type": "https://api.commercecloud.salesforce.com/documentation/error/v1/errors/too-many-requests",
+          "title": "Too Many Requests",
+          "detail": "You have performed too many requests in a short period of time."
+        },
+        "properties": {
+          "type": {
+            "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "https://example.com/probs/out-of-credit",
+            "type": "string"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+            "example": "You do not have enough credit.",
+            "type": "string"
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+            "example": "Your current balance is 30, but that costs 50.",
+            "type": "string"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+            "example": "/account/12345/msgs/abc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "trait:GiftCertificateTraits.NotFound:404": {
+      "description": "Thrown if the given gift certificate code is not valid.\n",
+      "examples": {
+        "application/json": {
+          "type": "/NotFoundException",
+          "detail": "The gift certificate with the provided code could not be retrieved.",
+          "title": "Not Found",
+          "instance": "/foo"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ApiStandards.ErrorResponse"
+      }
+    }
+  },
+  "paths": {
+    "/organizations/{organizationId}/gift-certificate": {
+      "post": {
+        "description": "Action to retrieve an existing gift certificate.",
+        "operationId": "getGiftCertificate",
+        "produces": [
+          "application/problem+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Gift certificate retrieved sucessfully.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "The maximum number of requests permitted per minute.",
+                "type": "string"
+              },
+              "X-RateLimit-Remaining": {
+                "description": "The number of requests remaining in the current rate limit window.",
+                "type": "string"
+              },
+              "X-RateLimit-Reset": {
+                "description": "The time at which the current rate limit window resets in UTC epoch seconds.",
+                "type": "string"
+              }
+            },
+            "examples": {
+              "application/json": {
+                "gift-certificate": "Can not resolve Examples/gift-certificate-example.raml"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/GiftCertificate"
+            }
+          },
+          "404": {
+            "$ref": "#/responses/trait:GiftCertificateTraits.NotFound:404"
+          },
+          "429": {
+            "$ref": "#/responses/trait:ApiStandards.RateLimited:429"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/definitions/GiftCertificateRequest"
+            },
+            "in": "body",
+            "name": "body",
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "siteId",
+            "required": true,
+            "type": "string"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        }
+      ]
+    }
+  }
+}

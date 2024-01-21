@@ -1,0 +1,1312 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Shopper Discovery Search",
+    "description": "These APIs provide the capability to search Discovery services based on channel identifier and also get Suggestions that show the most recently searched items, items that are popular in the user's locale, and items that are recommended based on the user's search history.",
+    "version": "v1"
+  },
+  "x-basePath": "{shortCode}.api.commercecloud.salesforce.com/discovery/query/{version}",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "x-annotation-RamlToJaxrs.resources": {
+    "plugins": [
+      {
+        "name": "ramltojaxrs.displayName"
+      }
+    ]
+  },
+  "x-annotation-RamlToJaxrs.responses": {
+    "plugins": [
+      {
+        "name": "ramltojaxrs.displayName"
+      }
+    ]
+  },
+  "x-annotation-RamlToJaxrs.responseClasses": {
+    "plugins": [
+      {
+        "name": "ramltojaxrs.displayName"
+      }
+    ]
+  },
+  "x-annotation-RamlToJaxrs.methods": {
+    "plugins": [
+      {
+        "name": "ramltojaxrs.displayName"
+      }
+    ]
+  },
+  "x-annotation-RamlToJaxrs.types": {
+    "plugins": [
+      {
+        "name": "ramltojaxrs.chainSetter"
+      }
+    ]
+  },
+  "definitions": {
+    "ApiStandards.Offset": {
+      "$ref": "#/definitions/ApiStandards.Pagination.offset"
+    },
+    "ApiStandards.Limit": {
+      "$ref": "#/definitions/ApiStandards.Pagination.limit"
+    },
+    "ApiStandards.Pagination.offset": {
+      "default": 0,
+      "minimum": 0,
+      "format": "int64",
+      "description": "Used to retrieve the results based on a particular resource offset.",
+      "type": "integer"
+    },
+    "ApiStandards.Pagination.limit": {
+      "default": 10,
+      "minimum": 1,
+      "format": "int32",
+      "description": "Maximum records to retrieve per request, not to exceed the maximum defined. A limit must be at least 1 so at least one record is returned (if any match the criteria).",
+      "type": "integer"
+    },
+    "ApiStandards.Pagination.total": {
+      "default": 0,
+      "minimum": 0,
+      "format": "int64",
+      "description": "The total number of hits that match the search's criteria. This can be greater than the number of results returned as search results are pagenated.",
+      "type": "integer"
+    },
+    "ISOStandards.LanguageCountry": {
+      "pattern": "^[a-z][a-z]-[A-Z][A-Z]$",
+      "description": "A concatenated version of the standard Language and Country codes, combined with a hyphen '`-`'.",
+      "example": "en-US",
+      "type": "string"
+    },
+    "CommerceCloudStandards.AdditionalProperties.NoPropertiesAllowed": {
+      "description": "This type is intended as an abstract super type that indicates that no additional properties are supported for this type and its sub types. All types that do not support any additional properties should inherit from this type. This type is not allowed to be used directly in any API and should always be extended.",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "CommerceCloudStandards.ClosedObject": {
+      "$ref": "#/definitions/CommerceCloudStandards.AdditionalProperties.NoPropertiesAllowed"
+    },
+    "DiscoveryQueryLibrary.DiscoveryFacetLibrary.FacetRequest": {
+      "description": "An entity describing the requested facet attributes. Explicit list of facet attributes can be requested in the \"facets\" field. Discovery will attempt to extend the result with most relevant facets up to the specified facet limit if one is set.",
+      "properties": {
+        "facetLimit": {
+          "format": "int64",
+          "description": "The number of expected facet attributes in the result. Discovery will try to fill up the result with most relevant facet attributes up to the specified limit including the required facet attributes from the \"facets\" property. If the \"facets\" property is not provided or empty the result will be extended with most relevant facet attributes based on the query up to the specified limit. If one or more facet attributes are provided at the optional \"facets\" property, the attributes will be included in the result in addition to the most relevant facet attributes. If this property is not specified, only facet attributes from the \"facets\" property will be considered in the result. If the \"facetLimit\" property is less than the number of attributes in the \"facets\" property, then the \"facetLimit\" property will be ignored.",
+          "example": 8,
+          "type": "integer"
+        },
+        "facets": {
+          "description": "Facet attributes which are required in the result.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryFacetLibrary.FacetInput"
+          }
+        }
+      },
+      "type": "object"
+    },
+    "DiscoveryQueryLibrary.DiscoveryFacetLibrary.FacetInput": {
+      "discriminator": "facetType",
+      "description": "An entity describing what type of faceting of the results is required. For example, results can be faceted by an attribute like color which has distinct values like red, blue, white etc. This is called value faceting. The results can also be faceted on a range of values having a lower and an upper bound like price. This is called range faceting.",
+      "type": "object",
+      "properties": {
+        "attributeId": {
+          "$ref": "#/definitions/DiscoveryStandards.AttributeId"
+        },
+        "facetType": {
+          "description": "The type of faceting the results - either value based or based on a range.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "attributeId",
+        "facetType"
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryFacetLibrary.ValueFacetInput": {
+      "description": "An entity describing the attributes that need to be faceted. For example, results can be faceted by an attribute like color, or brand.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryFacetLibrary.FacetInput"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "mask": {
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "Specifies the values that must be faceted. All other values are ignored in the results.",
+              "example": [
+                "red",
+                "blue"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryFacetLibrary.RangeFacetInput": {
+      "description": "An entity describing the attribute for which the range needs to be found in the returned results. For example, the results can be faceted by price; in which case, the min and max price of the items returned in the search results is made available.",
+      "additionalProperties": false,
+      "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryFacetLibrary.FacetInput"
+    },
+    "DiscoveryQueryLibrary.DiscoveryFacetLibrary.FacetOutput": {
+      "discriminator": "facetType",
+      "description": "A specific view of the returned results. For example, if value faceting on the brand attribute, the output could be the brand name followed by how many of the items in the search results belong to that brand name - such as \"Adidas - 5, Puma - 10, Nike - 15, New Balance - 2\". If range faceting on price, the output is the price attribute followed by the minimum and maximum price of the items in the search results - such as \"price - 9.99 (min), 549.99 (max)\".",
+      "type": "object",
+      "properties": {
+        "attributeId": {
+          "$ref": "#/definitions/DiscoveryStandards.AttributeId"
+        },
+        "facetType": {
+          "description": "The type of faceting the results - either value based or based on a range.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "attributeId",
+        "facetType"
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryFacetLibrary.ValueFacetOutputEntity": {
+      "description": "An individual faceted entity. For example, when faceting by color, this will be a value like \"red - 7\" (color, followed by how many of the items in the search results have that color).",
+      "type": "object",
+      "properties": {
+        "value": {
+          "maxLength": 256,
+          "description": "The faceted value.",
+          "example": "red",
+          "type": "string"
+        },
+        "count": {
+          "format": "int64",
+          "description": "The count of the faceted value.",
+          "example": 7,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "value",
+        "count"
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryFacetLibrary.ValueFacetOutput": {
+      "description": "A specific view of the returned results with unique attributes and their counts. For example, when faceted by color, this will be a set of values like \"red - 7, blue - 10, white - 21\" (color, followed by how many of the items in the search results have that color).",
+      "allOf": [
+        {
+          "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryFacetLibrary.FacetOutput"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "values": {
+              "uniqueItems": true,
+              "description": "Optional one or more ValueFacetOutputEntity objects.",
+              "example": [
+                {
+                  "value": "red",
+                  "count": 7
+                },
+                {
+                  "value": "blue",
+                  "count": 8
+                }
+              ],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryFacetLibrary.ValueFacetOutputEntity"
+              }
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryFacetLibrary.RangeFacetOutput": {
+      "description": "A specific view of the returned results with the minimum and maximum values. For example, when faceted by price, this will be value like \"price - 9.99 (min), 549.99 (max)\" (range faceted attribute (price in this case), followed by the minimum and maximum value of that attribute in the search results).",
+      "allOf": [
+        {
+          "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryFacetLibrary.FacetOutput"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "min": {
+              "description": "The serialized minimum value in the faceting range of number, integer, date-only, or datetime type.",
+              "example": "10, 100, 2019-12-31, 2019-12-31T23:59:59.000Z",
+              "type": "string"
+            },
+            "max": {
+              "description": "The serialized maximum value in the faceting range of number, integer, date-only, or datetime type.",
+              "example": "20, 200, 2020-12-31, 2020-12-31T23:59:59.000Z",
+              "type": "string"
+            }
+          },
+          "required": [
+            "min",
+            "max"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryGroupingLibrary.Grouping": {
+      "discriminator": "groupType",
+      "description": "Describes what the returned results must be grouped on. For example, results can be grouped by category such as 'Men's Shirts' or 'Kid's Toys'. They can also be grouped by a particular attribute variation - for example, grouping can be done on color, showing a collection of items that only vary by the color and nothing else.",
+      "type": "object",
+      "properties": {
+        "groupType": {
+          "description": "Specifies what the returned results are grouped on.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "groupType"
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryGroupingLibrary.AttributeGrouping": {
+      "description": "Describes which attribute the returned results must be grouped on. For example, results can be grouped by size and all items belonging to a specific size will be belong to one group, such as Men's XL sized t-shirts.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryGroupingLibrary.Grouping"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "attributeId": {
+              "$ref": "#/definitions/DiscoveryStandards.AttributeId"
+            },
+            "returnedAttributes": {
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "One or more attributes that should exclusively be returned for grouped items. If this field is not specified then it will inherit the returned attributes specified under Query Input. If no returned attributes are specified under Query Input then all returnable attributes will be returned.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoveryStandards.AttributeId"
+              }
+            }
+          },
+          "required": [
+            "attributeId"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoveryQueryLibrary.Query": {
+      "discriminator": "queryType",
+      "description": "An object which is used for performing a search. For example, a user can be search based on a phrase like \"jacket\" which looks for items containing that phrase in any searchable attribute. This type of querying is called a phrase query. Another example is to search a based on a phrase like \"women's petite shirts\" and constrain that search to a specific attribute like the item's description. This type of querying is called an attributes query.",
+      "type": "object",
+      "properties": {
+        "queryType": {
+          "description": "The type of the query.",
+          "type": "string"
+        },
+        "correctableAttributes": {
+          "$ref": "#/definitions/DiscoveryQueryLibrary.CorrectableAttributes"
+        },
+        "highlighting": {
+          "$ref": "#/definitions/DiscoveryQueryLibrary.Highlighting"
+        }
+      },
+      "required": [
+        "queryType"
+      ]
+    },
+    "DiscoveryQueryLibrary.CorrectableAttributes": {
+      "description": "An entity which contains configuration used for checking the spelling of a search phrase in a query. The provided attributes are used as the sources for correctly spelled words.",
+      "type": "object",
+      "properties": {
+        "attributes": {
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 10,
+          "description": "One or more Attribute Id objects.",
+          "example": [
+            "name",
+            "brand"
+          ],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiscoveryStandards.AttributeId"
+          }
+        }
+      },
+      "required": [
+        "attributes"
+      ]
+    },
+    "DiscoveryQueryLibrary.Highlighting": {
+      "description": "An entity which contains configuration for returning snippets of attributes based on a phrase. Each result will return the most relevant highlight for the given search phrase used in the query.",
+      "type": "object",
+      "properties": {
+        "attributes": {
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 1,
+          "description": "One or more Attribute Id objects.",
+          "example": [
+            "name"
+          ],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiscoveryStandards.AttributeId"
+          }
+        }
+      },
+      "required": [
+        "attributes"
+      ]
+    },
+    "DiscoveryQueryLibrary.PhraseQuery": {
+      "description": "A type of query where the search is done for a phrase over all searchable fields. For example, a search based on a phrase like \"thermometer\" which will look for items containing that search phrase in any searchable attribute.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/DiscoveryQueryLibrary.Query"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "description": "The value to search for.",
+              "example": "jacket",
+              "type": "string"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoveryQueryLibrary.AttributesQuery": {
+      "description": "A type of query where the search is done for a phrase in a specified set of searchable attributes. For exampe, a search for a phrase like \"thermometer\" only in selected attributes like \"description\" and \"features\".",
+      "allOf": [
+        {
+          "$ref": "#/definitions/DiscoveryQueryLibrary.Query"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "description": "A combination of one or more attributes, and the text to search for.",
+              "properties": {
+                "attributes": {
+                  "uniqueItems": true,
+                  "minItems": 1,
+                  "description": "One or more Attribute Id objects.",
+                  "example": [
+                    "name",
+                    "brand"
+                  ],
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/DiscoveryStandards.AttributeId"
+                  }
+                },
+                "phrase": {
+                  "description": "The value to search for in the attributes.",
+                  "example": "socks",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "attributes",
+                "phrase"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoveryQueryLibrary.QueryInput": {
+      "description": "Body of the Query when a request is sent to do a search.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/CommerceCloudStandards.ClosedObject"
+        },
+        {
+          "properties": {
+            "query": {
+              "description": "An object which is used for performing a search.",
+              "$ref": "#/definitions/DiscoveryQueryLibrary.Query"
+            },
+            "refinements": {
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "One or more conditions which are used to filter the returned results.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryRefinementLibrary.Refinement"
+              }
+            },
+            "returnedAttributes": {
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "One or more attributes that should exclusively be returned. If this field is not specified then all returnable attributes will be returned.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoveryStandards.AttributeId"
+              }
+            },
+            "grouping": {
+              "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryGroupingLibrary.Grouping"
+            },
+            "facets": {
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "One or more attributes on which the returned results need to be faceted.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryFacetLibrary.FacetInput"
+              }
+            },
+            "facetRequest": {
+              "description": "An entity describing the required facet attributes in the result.",
+              "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryFacetLibrary.FacetRequest"
+            },
+            "sorting": {
+              "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoverySortingLibrary.Sorting"
+            }
+          },
+          "required": [
+            "sorting"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoveryQueryLibrary.QueryOutput": {
+      "description": "Body of the response after a search is completed.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/CommerceCloudStandards.ClosedObject"
+        },
+        {
+          "properties": {
+            "hits": {
+              "uniqueItems": true,
+              "description": "A collection of result entities.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryQueryOutputLibrary.Result"
+              }
+            },
+            "facets": {
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "An optional collection of facet entities.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryFacetLibrary.FacetOutput"
+              }
+            },
+            "links": {
+              "example": {
+                "prev": {
+                  "href": "https://0dnz6oep.api.commercecloud.salesforce.com/discovery/query/v2/organizations/org-id/data-sets/c8e138bc-5aa0-48c7-b10a-eeb8d60fee0e/results?offset=0&limit=10"
+                },
+                "self": {
+                  "href": "https://0dnz6oep.api.commercecloud.salesforce.com/discovery/query/v2/organizations/org-id/data-sets/c8e138bc-5aa0-48c7-b10a-eeb8d60fee0e/results?offset=10&limit=10"
+                },
+                "next": {
+                  "href": "https://0dnz6oep.api.commercecloud.salesforce.com/discovery/query/v2/organizations/org-id/data-sets/c8e138bc-5aa0-48c7-b10a-eeb8d60fee0e/results?offset=20&limit=10"
+                }
+              },
+              "$ref": "#/definitions/DiscoveryStandards.PaginationLinks"
+            },
+            "limit": {
+              "$ref": "#/definitions/ApiStandards.Limit"
+            },
+            "offset": {
+              "$ref": "#/definitions/ApiStandards.Offset"
+            },
+            "total": {
+              "format": "int64",
+              "description": "The total number of matching items.",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "hits",
+            "links",
+            "limit",
+            "offset",
+            "total"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryQueryOutputLibrary.ItemReference": {
+      "description": "An entity that corresponds to an item in the search result. For example, in Commerce Cloud, this could be an item in a catalog of items that a merchant sells.",
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "$ref": "#/definitions/DiscoveryStandards.AttributeId"
+        },
+        "attributes": {
+          "description": "The attributes that were requested for when performing a search.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DiscoveryStandards.ExpansionAttribute"
+          }
+        }
+      },
+      "required": [
+        "itemId"
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryQueryOutputLibrary.Highlight": {
+      "description": "An entity containing an attribute ID and the highlight value found for that attribute. Each highlight will have the matched segment from the input phrase wrapped in <em> and </em> tags.",
+      "type": "object",
+      "properties": {
+        "attributeId": {
+          "$ref": "#/definitions/DiscoveryStandards.AttributeId"
+        },
+        "value": {
+          "description": "The highlight value",
+          "example": "This lightweight <em>jacket</em> is perfect for cool weather.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "attributeId",
+        "value"
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryQueryOutputLibrary.Result": {
+      "description": "An entity referencing an item and the group to which it belongs. Items can be grouped based on attributes that are groupable. If such a grouping is asked for at the time of querying, then the grouped items are also returned.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/CommerceCloudStandards.ClosedObject"
+        },
+        {
+          "properties": {
+            "matchedItem": {
+              "description": "An entity that corresponds to an item in the search result.",
+              "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryQueryOutputLibrary.ItemReference"
+            },
+            "highlights": {
+              "description": "A collection of highlights found for the matched item.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryQueryOutputLibrary.Highlight"
+              }
+            },
+            "groupId": {
+              "description": "Identifier of the grouped items.",
+              "example": "26194e28-9b2a-4a7e-b3e9-8328dd9acfca",
+              "type": "string"
+            },
+            "totalGroupedItems": {
+              "description": "The total number of items grouped together if there are any grouped items.",
+              "example": 5,
+              "type": "number"
+            },
+            "groupedItems": {
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "A collection of grouped items.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryQueryOutputLibrary.ItemReference"
+              }
+            }
+          },
+          "required": [
+            "matchedItem"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryRefinementLibrary.Refinement": {
+      "discriminator": "refinementType",
+      "description": "The criteria for filtering search results. Search results can be filtered by filterable attributes to further narrow down the number of items being presented to the user. For example, search results can be filtered to only show items belonging to a specific brand.",
+      "type": "object",
+      "properties": {
+        "attributeId": {
+          "$ref": "#/definitions/DiscoveryStandards.AttributeId"
+        },
+        "refinementType": {
+          "description": "The type of a refinement.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "attributeId",
+        "refinementType"
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryRefinementLibrary.ValueRefinement": {
+      "description": "A type of refinement where one or more phrases are used for refining the search results for a given attribute. For example, you can refine a search result to only show items that are eligible for expedited shipping.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryRefinementLibrary.Refinement"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "values": {
+              "uniqueItems": true,
+              "minItems": 1,
+              "description": "One or more ways of refining the search results based on number, integer, date-only, datetime, boolean, or string types.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "values"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoveryRefinementLibrary.RangeRefinement": {
+      "description": "A type of refinement where a range of values is used for refining the search results for a given attribute. For example, you can refine the search results to only show items that are below a specific price point.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoveryRefinementLibrary.Refinement"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "min": {
+              "description": "The minimum value in a range of type number, integer, date-only, datetime.",
+              "example": "9, 99, 2019-12-31, 2019-12-31T23:59:59.000Z",
+              "type": "string"
+            },
+            "max": {
+              "description": "The maximum value in a range of type number, integer, date-only, or datetime.",
+              "example": "90, 990, 2020-12-31, 2020-12-31T23:59:59.000Z",
+              "type": "string"
+            }
+          },
+          "required": [
+            "min",
+            "max"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoverySortingLibrary.Sorting": {
+      "discriminator": "sortType",
+      "description": "Describes what and how the returned results must be sorted. An attribute must be sortable before it can be used for sorting.",
+      "type": "object",
+      "properties": {
+        "sortType": {
+          "description": "Specifies what is sorted. For example, an attribute like 'brand' can be sorted.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "sortType"
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoverySortingLibrary.AttributeSorting": {
+      "description": "Describes which attribute the returned results must be sorted on. For example, sorting can be done based on the average user rating of the items returned in the results.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoverySortingLibrary.Sorting"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "attributeId": {
+              "$ref": "#/definitions/DiscoveryStandards.AttributeId"
+            },
+            "direction": {
+              "description": "Specifies how to sort the returned results.",
+              "example": "ASCENDING",
+              "enum": [
+                "ASCENDING",
+                "DESCENDING"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "attributeId",
+            "direction"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoveryQueryLibrary.DiscoverySortingLibrary.RelevanceSorting": {
+      "description": "Describes if the results need to be sorted based on relevance score.",
+      "additionalProperties": false,
+      "$ref": "#/definitions/DiscoveryQueryLibrary.DiscoverySortingLibrary.Sorting"
+    },
+    "DiscoverySuggestionLibrary.SuggestionType": {
+      "description": "The different types of suggestions. * RECENT - Search phrases that a shopper has recently executed. * SUGGESTED - Search phrases presented to a shopper based on recent activity and a base search text. * POPULAR - Search phrases that are trending in a shopper’s geolocation.",
+      "example": "SUGGESTED",
+      "enum": [
+        "RECENT",
+        "SUGGESTED",
+        "POPULAR"
+      ],
+      "type": "string"
+    },
+    "DiscoverySuggestionLibrary.Suggestion": {
+      "description": "A single suggested term for searching. For example, a suggested term can be handy when doing auto-complete as and when a user is searching for an item in an online store.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/CommerceCloudStandards.ClosedObject"
+        },
+        {
+          "properties": {
+            "phrase": {
+              "description": "The suggested phrase.",
+              "example": "shoes",
+              "type": "string"
+            }
+          },
+          "required": [
+            "phrase"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "DiscoverySuggestionLibrary.Suggestions": {
+      "description": "A collection of suggested terms for searching.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/CommerceCloudStandards.ClosedObject"
+        },
+        {
+          "properties": {
+            "recentSearchPhrases": {
+              "description": "Most recent search phrases from the clients.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoverySuggestionLibrary.Suggestion"
+              }
+            },
+            "suggestedSearchPhrases": {
+              "description": "The suggested phrases based on the partial input.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoverySuggestionLibrary.Suggestion"
+              }
+            },
+            "popularSearchPhrases": {
+              "description": "Popular search phrases across the service.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiscoverySuggestionLibrary.Suggestion"
+              }
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "ErrorTypes.BaseError": {
+      "description": "Standardized properties defined in the Commerce Cloud Standard error-response DataType raml file. Every error type consists of at least the four properties provided here of type, title, detail, and resource.",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "description": "A URI reference [RFC3986] that identifies the\nproblem type.  This specification encourages that, when\ndereferenced, it provide human-readable documentation for the\nproblem type (e.g., using HTML [W3C.REC-html5-20141028]).  When\nthis member is not present, its value is assumed to be\n\"about:blank\". It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "https://example.com/probs/out-of-credit",
+          "type": "string"
+        },
+        "title": {
+          "description": "A short, human-readable summary of the problem\ntype.  It will not change from occurrence to occurrence of the\nproblem, except for purposes of localization.\n",
+          "example": "You do not have enough credit.",
+          "type": "string"
+        },
+        "detail": {
+          "description": "A human-readable explanation specific to this\noccurrence of the problem.\n",
+          "example": "Your current balance is 30, but that costs 50.",
+          "type": "string"
+        },
+        "instance": {
+          "description": "A URI reference that identifies the specific\noccurrence of the problem.  It may or may not yield further\ninformation if dereferenced.  It accepts relative URIs; this means\nthat they must be resolved relative to the document's base URI, as\nper [RFC3986], Section 5.\n",
+          "example": "/account/12345/msgs/abc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "ErrorTypes.AuthenticationFailure": {
+      "description": "Error type indicating an error due to lack of authentication. Users are required to authenticate to access all Discovery API endpoints. Users should attempt to re-authenticate before retrying the request.",
+      "example": {
+        "type": "https://discovery.commercecloud.salesforce.com/documentation/error/v2/errors/authentication-failure",
+        "title": "Authentication Failure",
+        "detail": "Authentication failed due to missing or invalid token.",
+        "instance": "{Resource URI}"
+      },
+      "$ref": "#/definitions/ErrorTypes.BaseError"
+    },
+    "ErrorTypes.AuthorizationFailure": {
+      "description": "Error type indicating an error due to lack of privilege. Users who are authenticated but attempt to access a resource which they don't have permission to access will receive this error.",
+      "example": {
+        "type": "https://discovery.commercecloud.salesforce.com/documentation/error/v2/errors/authorization-failure",
+        "title": "Authorization Failure",
+        "detail": "The provided credentials are not authorized to access this resource.",
+        "instance": "{Resource URI}"
+      },
+      "$ref": "#/definitions/ErrorTypes.BaseError"
+    },
+    "ErrorTypes.NotFound": {
+      "description": "Error type indicating the user attempted to access a resource or endpoint which doesn't exist.",
+      "example": {
+        "type": "https://discovery.commercecloud.salesforce.com/documentation/error/v2/errors/not-found",
+        "title": "Resource Not Found",
+        "detail": "The requested {resource} was not found.",
+        "instance": "{Resource URI}"
+      },
+      "$ref": "#/definitions/ErrorTypes.BaseError"
+    },
+    "ErrorTypes.ServiceUnavailable": {
+      "description": "Error type indicating the server temporarily cannot process the request due to internal issues, but the same request can be retried at a later point in time.",
+      "example": {
+        "type": "https://discovery.commercecloud.salesforce.com/documentation/error/v2/errors/service-unavailable",
+        "title": "Service Unavailable",
+        "detail": "The server is temporarily unable to handle the request.",
+        "instance": "{Resource URI}"
+      },
+      "$ref": "#/definitions/ErrorTypes.BaseError"
+    },
+    "ErrorTypes.InternalServerError": {
+      "description": "Error type indicating that the server could not fulfil the client’s request due to some unexpected condition.",
+      "example": {
+        "type": "https://discovery.commercecloud.salesforce.com/documentation/error/v2/errors/internal-server-error",
+        "title": "Internal Server Error",
+        "detail": "There was an error completing your request.",
+        "instance": "{Resource URI}"
+      },
+      "$ref": "#/definitions/ErrorTypes.BaseError"
+    },
+    "ErrorTypes.RateLimitExceeded": {
+      "description": "Error type indicating that the user has reached a rate limit for the server by sending requests too frequently. This error includes the limit of allowed requests to the resource.",
+      "example": {
+        "type": "https://discovery.commercecloud.salesforce.com/documentation/error/v2/errors/rate-limit-reached",
+        "title": "Rate Limit Reached",
+        "detail": "The request could not be processed due to the current volume of requests.",
+        "instance": "{Resource URI}",
+        "requestLimit": 1000
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/ErrorTypes.BaseError"
+        },
+        {
+          "properties": {
+            "requestLimit": {
+              "description": "A number returned indicating the maximum number of allowed requests for the instance being requested.",
+              "type": "number"
+            }
+          },
+          "required": [
+            "requestLimit"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ErrorTypes.ResourceBadRequest": {
+      "description": "Error indicating that the request was malformed. Additionally thrown when the request was not processed due to violation of a server enforced quota or limit. This error will include a list of enums indicating the respective server limits which have been exceeded.",
+      "example": {
+        "type": "https://discovery.commercecloud.salesforce.com/documentation/error/v2/errors/invalid-request",
+        "title": "Invalid Request",
+        "detail": "The provided request information is of an invalid format.",
+        "instance": "{Resource URI}"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/ErrorTypes.BaseError"
+        },
+        {
+          "properties": {
+            "limits": {
+              "description": "A list of limit objects providing the exceeded limits and the respective counts.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ErrorTypes.Limit"
+              }
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "ErrorTypes.Limit": {
+      "description": "A type of resource limit which can be exceeded. Each enum corresponds to a different limit defined by the Discovery APIs non-functional requirements.",
+      "properties": {
+        "limitDetails": {
+          "description": "An enum indicating the respective server limit which has been exceeded.",
+          "enum": [
+            "ATTRIBUTE_DEFINITION_COUNT",
+            "ITEM_IDENTIFIER_ATTRIBUTE_DEFINITION_COUNT",
+            "ATTRIBUTE_USAGE_FACETABLE_COUNT",
+            "ATTRIBUTE_USAGE_FILTERABLE_COUNT",
+            "ATTRIBUTE_USAGE_GROUPABLE_COUNT",
+            "ATTRIBUTE_USAGE_SEARCHABLE_COUNT",
+            "ATTRIBUTE_USAGE_SORTABLE_COUNT",
+            "ATTRIBUTE_CONFIGURATION_LOCALIZED_PATHS_COUNT",
+            "QUERY_INPUT_PHRASE_COUNT",
+            "QUERY_INPUT_TAG_IDS_COUNT",
+            "QUERY_INPUT_FACETS_COUNT",
+            "QUERY_INPUT_SORTING_COUNT",
+            "QUERY_INPUT_GROUPING_COUNT",
+            "QUERY_INPUT_REFINEMENTS_COUNT",
+            "QUERY_INPUT_PAGINATION_COUNT"
+          ],
+          "type": "string"
+        },
+        "count": {
+          "description": "The current count of data associated with he provided enum.",
+          "example": 51,
+          "type": "integer"
+        },
+        "limit": {
+          "description": "The defined limit value associated with the provided enum.",
+          "example": 50,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "limitDetails",
+        "count",
+        "limit"
+      ],
+      "type": "object"
+    },
+    "DiscoveryStandards.IDs.AttributeId": {
+      "maxLength": 256,
+      "description": "User defined unique identifier for a specific attribute.",
+      "example": "name",
+      "type": "string"
+    },
+    "DiscoveryStandards.Links.Reference": {
+      "description": "Location of a resource.",
+      "type": "string"
+    },
+    "DiscoveryStandards.Links.Self": {
+      "description": "Link to the resource.",
+      "additionalProperties": false,
+      "properties": {
+        "href": {
+          "$ref": "#/definitions/DiscoveryStandards.Links.Reference"
+        }
+      },
+      "required": [
+        "href"
+      ],
+      "type": "object"
+    },
+    "DiscoveryStandards.Links.Pagination": {
+      "description": "Entity containing HATEOS links. These are links that allow navigating (paging) a result set.",
+      "additionalProperties": false,
+      "properties": {
+        "prev": {
+          "description": "Link to the previous set of results.",
+          "$ref": "#/definitions/DiscoveryStandards.Links.Self"
+        },
+        "self": {
+          "description": "Link to the current set of results.",
+          "$ref": "#/definitions/DiscoveryStandards.Links.Self"
+        },
+        "next": {
+          "description": "Link to the next set of results.",
+          "$ref": "#/definitions/DiscoveryStandards.Links.Self"
+        }
+      },
+      "required": [
+        "self"
+      ],
+      "type": "object"
+    },
+    "DiscoveryStandards.AttributeId": {
+      "$ref": "#/definitions/DiscoveryStandards.IDs.AttributeId"
+    },
+    "DiscoveryStandards.PaginationLinks": {
+      "$ref": "#/definitions/DiscoveryStandards.Links.Pagination"
+    },
+    "DiscoveryStandards.ExpansionAttribute": {
+      "description": "An entity containing an attribute ID, the attribute's path, and the attribute's value for a corresponding item.",
+      "properties": {
+        "attributeId": {
+          "$ref": "#/definitions/DiscoveryStandards.IDs.AttributeId"
+        },
+        "path": {
+          "description": "The path, using dot notation, that this attribute corresponds to.",
+          "example": "item.brand",
+          "type": "string"
+        },
+        "value": {
+          "description": "The data for the given attribute.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "attributeId",
+        "path",
+        "value"
+      ],
+      "type": "object"
+    }
+  },
+  "parameters": {
+    "trait:ApiStandards.OffsetPaginated:offset": {
+      "in": "query",
+      "name": "offset",
+      "type": "string"
+    },
+    "trait:DiscoveryStandards.Traceable:RequestId": {
+      "maxLength": 256,
+      "description": "Client defined unique identifier, used for tracking within the domain.",
+      "type": "string",
+      "in": "header",
+      "name": "RequestId"
+    }
+  },
+  "responses": {
+    "trait:ApiStandards.OffsetPaginated:200": {
+      "description": "",
+      "headers": {
+        "SFDC-Pagination-Offset": {
+          "description": "The starting offset returned.",
+          "type": "string"
+        },
+        "SFDC-Pagination-Limit": {
+          "maximum": null,
+          "description": "The limit requested.",
+          "default": "<<defaultSize>>",
+          "type": "string"
+        },
+        "SFDC-Pagination-Total-Count": {
+          "type": "string"
+        },
+        "SFDC-Pagination-Result-Count": {
+          "format": "int64",
+          "description": "The number of results included in the response.",
+          "type": "number"
+        }
+      }
+    },
+    "trait:DiscoveryStandards.ResourceCommonErrors:400": {
+      "description": "Bad Request.",
+      "schema": {
+        "$ref": "#/definitions/ErrorTypes.ResourceBadRequest"
+      }
+    },
+    "trait:DiscoveryStandards.ResourceCommonErrors:401": {
+      "description": "Authentication Failure.",
+      "schema": {
+        "$ref": "#/definitions/ErrorTypes.AuthenticationFailure"
+      }
+    },
+    "trait:DiscoveryStandards.ResourceCommonErrors:403": {
+      "description": "Authorization Failure.",
+      "schema": {
+        "$ref": "#/definitions/ErrorTypes.AuthorizationFailure"
+      }
+    },
+    "trait:DiscoveryStandards.ResourceCommonErrors:404": {
+      "description": "Not Found.",
+      "schema": {
+        "$ref": "#/definitions/ErrorTypes.NotFound"
+      }
+    },
+    "trait:DiscoveryStandards.ResourceCommonErrors:429": {
+      "description": "Too Many Requests.",
+      "headers": {
+        "Retry-After": {
+          "examples": [
+            120
+          ],
+          "type": "string"
+        }
+      },
+      "schema": {
+        "$ref": "#/definitions/ErrorTypes.RateLimitExceeded"
+      }
+    },
+    "trait:DiscoveryStandards.ResourceCommonErrors:500": {
+      "description": "Internal Server Error.",
+      "schema": {
+        "$ref": "#/definitions/ErrorTypes.InternalServerError"
+      }
+    },
+    "trait:DiscoveryStandards.ResourceCommonErrors:503": {
+      "description": "Service Unavailable.",
+      "schema": {
+        "$ref": "#/definitions/ErrorTypes.ServiceUnavailable"
+      }
+    }
+  },
+  "paths": {
+    "/organizations/{organizationId}/channels/{channelId}/results": {
+      "post": {
+        "description": "This method retrieves search results for a Channel.",
+        "operationId": "retrieveResults",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/trait:ApiStandards.OffsetPaginated:200"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/definitions/DiscoveryQueryLibrary.QueryInput"
+            },
+            "in": "body",
+            "name": "body",
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "locale",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "default": 30,
+            "maximum": 240,
+            "description": "Maximum records to retrieve per request, not to exceed 240. Defaults to 30.",
+            "in": "query",
+            "name": "limit",
+            "type": "string"
+          },
+          {
+            "$ref": "#/parameters/trait:ApiStandards.OffsetPaginated:offset"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        },
+        {
+          "maxLength": 256,
+          "description": "The unique identifier of a Channel.",
+          "type": "string",
+          "in": "path",
+          "name": "channelId",
+          "required": true
+        }
+      ]
+    },
+    "/organizations/{organizationId}/channels/{channelId}/suggestions": {
+      "get": {
+        "description": "This method gets suggestions for the user's search activity for a channel.",
+        "operationId": "getSuggestions",
+        "responses": {
+          "200": {
+            "description": "The response on requesting for suggestions.",
+            "examples": {
+              "application/json": {
+                "results": {
+                  "recentSearchPhrases": [],
+                  "suggestedSearchPhrases": [
+                    {
+                      "phrase": "camera"
+                    }
+                  ],
+                  "popularSearchPhrases": [
+                    {
+                      "phrase": "canon"
+                    },
+                    {
+                      "phrase": "camera"
+                    },
+                    {
+                      "phrase": "nikon"
+                    },
+                    {
+                      "phrase": "trouser"
+                    },
+                    {
+                      "phrase": "shorts"
+                    },
+                    {
+                      "phrase": "shirt"
+                    }
+                  ]
+                }
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/DiscoverySuggestionLibrary.Suggestions"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "description": "The types of suggestions to return.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "suggestionTypes",
+            "required": true
+          },
+          {
+            "minLength": 3,
+            "maxLength": 10,
+            "description": "The optional text to retrieve suggestions for.",
+            "type": "string",
+            "in": "query",
+            "name": "searchText"
+          },
+          {
+            "in": "query",
+            "name": "locale",
+            "required": true,
+            "type": "string"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "description": "An identifier for the organization the request is being made by.",
+          "type": "string",
+          "in": "path",
+          "name": "organizationId",
+          "required": true
+        },
+        {
+          "maxLength": 256,
+          "description": "The unique identifier of a Channel.",
+          "type": "string",
+          "in": "path",
+          "name": "channelId",
+          "required": true
+        }
+      ]
+    }
+  }
+}
